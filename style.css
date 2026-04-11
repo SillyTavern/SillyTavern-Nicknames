@@ -1,0 +1,201 @@
+/* Nickname Editor Styles */
+
+.nickname-editor-wrapper {
+    margin: 10px 0;
+}
+
+.nickname-editor-container {
+    background: var(--SmartThemeBlurTintColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.nickname-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.nickname-editor-header .title {
+    font-weight: bold;
+    color: var(--SmartThemeTextColor);
+}
+
+.context-indicators {
+    display: flex;
+    gap: 8px;
+}
+
+.context-icon {
+    opacity: 0.3;
+    transition: opacity 0.2s;
+    cursor: default;
+}
+
+.context-icon.active {
+    opacity: 1;
+}
+
+.context-icon.global.active {
+    color: #4caf50;
+}
+
+.context-icon.char.active {
+    color: #2196f3;
+}
+
+.context-icon.chat.active {
+    color: #ff9800;
+}
+
+.nickname-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+#nickname_input {
+    flex: 1;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+.nickname-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.nickname-actions .menu_button {
+    min-width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nickname-actions .menu_button.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.nickname-context-selector {
+    margin-bottom: 8px;
+}
+
+.nickname-context-selector small {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--SmartThemeEmColor);
+}
+
+.context-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.context-btn {
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    background: var(--SmartThemeBlurTintColor);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.context-btn:hover:not(.disabled) {
+    background: var(--SmartThemeBorderColor);
+}
+
+.context-btn.selected {
+    background: var(--SmartThemeBorderColor);
+    border-color: var(--SmartThemeTextColor);
+    font-weight: bold;
+}
+
+.context-btn.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.nickname-summary {
+    margin-top: 8px;
+}
+
+.nickname-summary .inline-drawer-toggle {
+    cursor: pointer;
+    padding: 4px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nickname-summary .inline-drawer-icon {
+    font-size: 0.9em;
+    transition: transform 0.2s;
+}
+
+.nickname-summary .inline-drawer-icon.down {
+    transform: rotate(0deg);
+}
+
+.nickname-summary .inline-drawer-icon:not(.down) {
+    transform: rotate(180deg);
+}
+
+.nickname-levels {
+    padding: 8px;
+    background: var(--SmartThemeBlurTintColor);
+    border-radius: 4px;
+    margin-top: 4px;
+}
+
+.level-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+    opacity: 0.6;
+}
+
+.level-row:last-child {
+    border-bottom: none;
+}
+
+.level-row.has-value {
+    opacity: 1;
+}
+
+.level-row.effective {
+    font-weight: bold;
+    color: var(--SmartThemeTextColor);
+    opacity: 1;
+}
+
+.level-row.disabled {
+    opacity: 0.3;
+    font-style: italic;
+}
+
+.level-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.level-value {
+    color: var(--SmartThemeTextColor);
+}
+
+.level-value em {
+    color: var(--SmartThemeEmColor);
+    font-style: italic;
+}

@@ -7,28 +7,51 @@ import { SlashCommandNamedArgument, ARGUMENT_TYPE, SlashCommandArgument } from '
 import { enumIcons } from '../../../../slash-commands/SlashCommandCommonEnumsProvider.js';
 import { SlashCommandEnumValue, enumTypes } from '../../../../slash-commands/SlashCommandEnumValue.js';
 import { SlashCommandParser } from '../../../../slash-commands/SlashCommandParser.js';
-import { ContextLevel, handleNickname } from './nicknames.js';
+import { ContextLevel, handleNickname, getUserNickname, getCharNickname } from './nicknames.js';
+import { refreshAllUI } from './ui.js';
 
 export const RESET_NICKNAME_LABEL = '#reset';
 
-/** @type {(args: { for: ('char'|'chat'|'global')? }, nickname: string) => string} */
-function nicknameUserCallback(args, nickname) {
+/**
+ * Sets a nickname and refreshes the UI.
+ * @param {'user'|'char'} type
+ * @param {string|null} nickname
+ * @param {string|null} context
+ * @param {boolean} reset
+ * @returns {string}
+ */
+function setNicknameWithRefresh(type, nickname, context, reset = false) {
     try {
-        return handleNickname('user', nickname, args.for, { reset: nickname === RESET_NICKNAME_LABEL })?.name ?? '';
+        const result = handleNickname(type, nickname, context, { reset });
+        if (result || reset) {
+            // Refresh all UI components
+            refreshAllUI();
+        }
+        return result?.name ?? '';
     } catch (error) {
-        toastr.error(`Error: ${error.message}`, 'Nicknames');
+        toastr.error(`Error: ${error?.message}`, 'Nicknames');
         return '';
     }
 }
 
 /** @type {(args: { for: ('char'|'chat'|'global')? }, nickname: string) => string} */
-function nicknameCharCallback(args, nickname) {
-    try {
-        return handleNickname('char', nickname, args.for, { reset: nickname === RESET_NICKNAME_LABEL })?.name ?? '';
-    } catch (error) {
-        toastr.error(`Error: ${error.message}`, 'Nicknames');
-        return '';
+function nicknameUserCallback(args, nickname) {
+    if (!nickname) {
+        // Get only - return effective nickname
+        return getUserNickname().name ?? '';
     }
+    // Set with refresh
+    return setNicknameWithRefresh('user', nickname, args.for, nickname === RESET_NICKNAME_LABEL);
+}
+
+/** @type {(args: { for: ('char'|'chat'|'global')? }, nickname: string) => string} */
+function nicknameCharCallback(args, nickname) {
+    if (!nickname) {
+        // Get only - return effective nickname
+        return getCharNickname().name ?? '';
+    }
+    // Set with refresh
+    return setNicknameWithRefresh('char', nickname, args.for, nickname === RESET_NICKNAME_LABEL);
 }
 
 /**
