@@ -1,55 +1,55 @@
-<div id="nickname_editor" class="nickname-editor-container">
+<div class="nickname-editor-container">
     <div class="nickname-editor-header">
-        <label class="title" data-i18n="Nickname">Nickname</label>
+        <label class="title_restorable" data-i18n="Nickname">Nickname</label>
         <div class="context-indicators" title="Active context level for this nickname">
-            <i class="fa-solid fa-globe context-icon global {{#if isGlobalActive}}active{{/if}}" title="Global" data-context="global"></i>
-            <i class="fa-solid fa-user context-icon char {{#if isCharActive}}active{{/if}}" title="Character-level (persona only)" data-context="char"></i>
-            <i class="fa-solid fa-message context-icon chat {{#if isChatActive}}active{{/if}}" title="Chat-level" data-context="chat"></i>
+            <i class="fa-solid fa-globe context-icon" data-context="global" title="Global"></i>
+            <i class="fa-solid fa-user context-icon" data-context="char" title="Character-level (personas only)"></i>
+            <i class="fa-solid fa-message context-icon" data-context="chat" title="Chat-level"></i>
         </div>
     </div>
     <div class="nickname-input-row">
-        <input type="text" id="nickname_input" class="text_pole" placeholder="No nickname set" value="{{currentNickname}}" maxlength="100" />
+        <input type="text" class="nickname-input text_pole" placeholder="No nickname set" maxlength="100" />
         <div class="nickname-actions">
-            <button id="nickname_save_btn" class="menu_button fa-solid fa-check" title="Save to selected context"></button>
-            <button id="nickname_clear_btn" class="menu_button fa-solid fa-xmark {{#unless currentNickname}}disabled{{/unless}}" title="Clear from selected context"></button>
+            <button class="nickname-save-btn menu_button fa-solid fa-check" title="Save to selected context"></button>
+            <button class="nickname-clear-btn menu_button fa-solid fa-xmark" title="Clear from selected context"></button>
         </div>
     </div>
     <div class="nickname-context-selector">
         <small data-i18n="Save to:">Save to:</small>
         <div class="context-buttons">
-            <button class="context-btn {{#if isGlobalSelected}}selected{{/if}}" data-context="global" title="Applies everywhere">
+            <button class="context-btn" data-context="global" title="Applies everywhere">
                 <i class="fa-solid fa-globe"></i> <span data-i18n="Global">Global</span>
             </button>
-            <button class="context-btn {{#if isCharSelected}}selected{{/if}} {{#if isCharDisabled}}disabled{{/if}}" data-context="char" title="For this character-persona pair (personas only)">
+            <button class="context-btn" data-context="char" title="For this character-persona pair (personas only)">
                 <i class="fa-solid fa-user"></i> <span data-i18n="Char">Char</span>
             </button>
-            <button class="context-btn {{#if isChatSelected}}selected{{/if}} {{#if isChatDisabled}}disabled{{/if}}" data-context="chat" title="For this chat only">
+            <button class="context-btn" data-context="chat" title="For this chat only">
                 <i class="fa-solid fa-message"></i> <span data-i18n="Chat">Chat</span>
             </button>
         </div>
     </div>
-    <div class="nickname-summary expandable">
+    <div class="nickname-summary">
         <div class="inline-drawer-toggle inline-drawer-header">
             <small data-i18n="View all levels">View all levels</small>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
         </div>
         <div class="inline-drawer-content">
             <div class="nickname-levels">
-                <div class="level-row {{#if globalValue}}has-value{{/if}}">
+                <div class="level-row" data-level="global">
                     <span class="level-name"><i class="fa-solid fa-globe"></i> <span data-i18n="Global:">Global:</span></span>
-                    <span class="level-value">{{#if globalValue}}{{globalValue}}{{else}}<em data-i18n="Not set">Not set</em>{{/if}}</span>
+                    <span class="level-value"></span>
                 </div>
-                <div class="level-row {{#if charValue}}has-value{{/if}} {{#if isCharLevelDisabled}}disabled{{/if}}">
+                <div class="level-row" data-level="char">
                     <span class="level-name"><i class="fa-solid fa-user"></i> <span data-i18n="Character:">Character:</span></span>
-                    <span class="level-value">{{#if isCharLevelDisabled}}<em data-i18n="N/A (personas only)">N/A (personas only)</em>{{else}}{{#if charValue}}{{charValue}}{{else}}<em data-i18n="Not set">Not set</em>{{/if}}{{/if}}</span>
+                    <span class="level-value"></span>
                 </div>
-                <div class="level-row {{#if chatValue}}has-value{{/if}} {{#if isChatLevelDisabled}}disabled{{/if}}">
+                <div class="level-row" data-level="chat">
                     <span class="level-name"><i class="fa-solid fa-message"></i> <span data-i18n="Chat:">Chat:</span></span>
-                    <span class="level-value">{{#if isChatLevelDisabled}}<em data-i18n="N/A (no active chat)">N/A (no active chat)</em>{{else}}{{#if chatValue}}{{chatValue}}{{else}}<em data-i18n="Not set">Not set</em>{{/if}}{{/if}}</span>
+                    <span class="level-value"></span>
                 </div>
-                <div class="level-row effective">
+                <div class="level-row effective" data-level="effective">
                     <span class="level-name"><i class="fa-solid fa-check-circle"></i> <span data-i18n="Effective:">Effective:</span></span>
-                    <span class="level-value">{{#if effectiveValue}}{{effectiveValue}}{{else}}<em data-i18n="Using original name">Using original name</em>{{/if}}</span>
+                    <span class="level-value"></span>
                 </div>
             </div>
         </div>

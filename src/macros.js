@@ -6,7 +6,7 @@
  */
 
 import { MacroEnvBuilder, env_provider_order } from '../../../../../scripts/macros/engine/MacroEnvBuilder.js';
-import { getUserNickname, getCharNickname, nicknameSettings } from './nicknames.js';
+import { getUserNickname, getCharNickname, nicknameSettings, ContextLevel } from './nicknames.js';
 
 let providerRegistered = false;
 
@@ -21,12 +21,12 @@ export function registerMacroProvider() {
         if (!nicknameSettings.useForMacros) return;
 
         const userResult = getUserNickname();
-        if (userResult.name && userResult.context !== 'none') {
+        if (userResult.name && userResult.context !== ContextLevel.NONE) {
             env.names.user = userResult.name;
         }
 
         const charResult = getCharNickname();
-        if (charResult.name && charResult.context !== 'none') {
+        if (charResult.name && charResult.context !== ContextLevel.NONE) {
             env.names.char = charResult.name;
         }
     }, env_provider_order.NORMAL);

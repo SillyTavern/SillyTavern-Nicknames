@@ -1,10 +1,9 @@
 import { injectUI, registerEventListeners } from './src/ui.js';
-import { ensureSettings } from './src/nicknames.js';
+import { ensureSettings, migrateCharKeys, migrateChatCharKeys } from './src/nicknames.js';
 import { registerMacroProvider } from './src/macros.js';
 import { registerSlashCommands } from './src/slash-commands.js';
 import { event_types, eventSource } from '/script.js';
 import { getContext } from '/scripts/st-context.js';
-import { migrateCharKeys, migrateChatCharKeys } from './src/nicknames.js';
 
 export const EXTENSION_KEY = 'nicknames';
 export const EXTENSION_NAME = 'SillyTavern-Nicknames';

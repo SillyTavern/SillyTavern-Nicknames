@@ -16,7 +16,7 @@ export const RESET_NICKNAME_LABEL = '#reset';
  * Sets a nickname and refreshes the UI.
  * @param {'user'|'char'} type
  * @param {string|null} nickname
- * @param {string|null} context
+ * @param {'chat'|'char'|'global'|null} context
  * @param {boolean} reset
  * @returns {string}
  */

@@ -169,8 +169,8 @@ function getCharKey() {
  * Handles nickname settings for the given type, in the given context.
  *
  * @param {'user'|'char'} type - Type of nickname to handle. Can be either 'user' or 'char'
- * @param {string?} [value=null] - Value to set the nickname to - If not given, the nickname will be read instead
- * @param {'chat'|'char'|'global'?} [forContext=null] - Context in which to handle the nickname - Can be 'chat', 'char', or 'global'. If not given, the first nickname found in the context in the specified order will be returned
+ * @param {string|null} [value=null] - Value to set the nickname to - If not given, the nickname will be read instead
+ * @param {ContextLevel|null} [forContext=null] - Context in which to handle the nickname - Can be 'chat', 'char', or 'global'. If not given, the first nickname found in the context in the specified order will be returned
  * @param {object} [options] - Optional arguments
  * @param {boolean} [options.reset=false] - If true, the nickname will be reset to its default value
  *
