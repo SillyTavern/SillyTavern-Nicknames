@@ -56,9 +56,9 @@ export const settingKeys = Object.freeze({
 
 const defaultSettings = Object.freeze({
     [settingKeys.CUR_VERSION]: null,
-    [settingKeys.USE_FOR_CHAR_LIST]: true,
-    [settingKeys.USE_FOR_CHAT_MESSAGES]: true,
-    [settingKeys.USE_FOR_MACROS]: true,
+    [settingKeys.USE_FOR_CHAR_LIST]: false,
+    [settingKeys.USE_FOR_CHAT_MESSAGES]: false,
+    [settingKeys.USE_FOR_MACROS]: false,
     mappings: {
         char: {},
         global: {
