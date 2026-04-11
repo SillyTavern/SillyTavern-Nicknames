@@ -1,9 +1,15 @@
-import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
-import { SlashCommandNamedArgument, ARGUMENT_TYPE, SlashCommandArgument } from '../../../slash-commands/SlashCommandArgument.js';
-import { enumIcons } from '../../../slash-commands/SlashCommandCommonEnumsProvider.js';
-import { SlashCommandEnumValue, enumTypes } from '../../../slash-commands/SlashCommandEnumValue.js';
-import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
-import { ContextLevel, handleNickname } from './index.js';
+/**
+ * Slash command registrations for the Nicknames extension.
+ */
+
+import { SlashCommand } from '../../../../slash-commands/SlashCommand.js';
+import { SlashCommandNamedArgument, ARGUMENT_TYPE, SlashCommandArgument } from '../../../../slash-commands/SlashCommandArgument.js';
+import { enumIcons } from '../../../../slash-commands/SlashCommandCommonEnumsProvider.js';
+import { SlashCommandEnumValue, enumTypes } from '../../../../slash-commands/SlashCommandEnumValue.js';
+import { SlashCommandParser } from '../../../../slash-commands/SlashCommandParser.js';
+import { ContextLevel, handleNickname } from './nicknames.js';
+
+export const RESET_NICKNAME_LABEL = '#reset';
 
 /** @type {(args: { for: ('char'|'chat'|'global')? }, nickname: string) => string} */
 function nicknameUserCallback(args, nickname) {
@@ -25,9 +31,10 @@ function nicknameCharCallback(args, nickname) {
     }
 }
 
-export const RESET_NICKNAME_LABEL = '#reset';
-
-export function registerNicknamesSlashCommands() {
+/**
+ * Registers all nickname slash commands.
+ */
+export function registerSlashCommands() {
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'nickname-user',
         aliases: ['nickname-persona'],
@@ -63,8 +70,9 @@ export function registerNicknamesSlashCommands() {
                 ],
             }),
         ],
-        helpString: 'Sets the nickname of the current user - or ',
+        helpString: 'Sets or gets the nickname for the current user (persona). Without arguments, returns the current effective nickname. With a nickname argument, sets it for the specified context (defaults to global if not specified).',
     }));
+
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'nickname-char',
         callback: nicknameCharCallback,
@@ -99,6 +107,6 @@ export function registerNicknamesSlashCommands() {
                 ],
             }),
         ],
-        helpString: 'Sets the nickname of the current character - or ',
+        helpString: 'Sets or gets the nickname for the current character. Without arguments, returns the current effective nickname. With a nickname argument, sets it for the specified context (defaults to global if not specified). Character-level setting is not available for characters (only works for user/persona).',
     }));
 }

@@ -6,6 +6,9 @@
     "js": "index.js",
     "css": "style.css",
     "author": "Wolfsblvt",
-    "version": "0.1.0",
-    "homePage": "https://github.com/Wolfsblvt/SillyTavern-Nicknames"
+    "version": "0.2.0",
+    "homePage": "https://github.com/Wolfsblvt/SillyTavern-Nicknames",
+    "hooks": {
+        "activate": "init"
+    }
 }
