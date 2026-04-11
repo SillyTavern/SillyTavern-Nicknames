@@ -1,12 +1,14 @@
 <div class="nickname-editor-container">
-    <div class="nickname-editor-header">
-        <label class="title_restorable" data-i18n="Nickname">Nickname</label>
-        <div class="context-indicators" title="Active context level for this nickname">
-            <i class="fa-solid fa-globe context-icon" data-context="global" title="Global"></i>
-            <i class="fa-solid fa-user context-icon" data-context="char" title="Character-level (personas only)"></i>
-            <i class="fa-solid fa-message context-icon" data-context="chat" title="Chat-level"></i>
+    <h4 class="flex-container alignItemsBaseline">
+        <span data-i18n="Nickname">Nickname</span>
+        <i class="fa-solid fa-circle-info opacity50p nickname-extension-icon"
+           title="This section is provided by the SillyTavern-Nicknames extension"></i>
+        <div class="context-indicators">
+            <i class="fa-solid fa-globe context-icon" data-context="global" title="Global nickname is active"></i>
+            <i class="fa-solid fa-user context-icon" data-context="char" title="Character-level nickname is active (personas only)"></i>
+            <i class="fa-solid fa-message context-icon" data-context="chat" title="Chat-level nickname is active"></i>
         </div>
-    </div>
+    </h4>
     <div class="nickname-input-row">
         <input type="text" class="nickname-input text_pole" placeholder="No nickname set" maxlength="100" />
         <div class="nickname-actions">
@@ -15,17 +17,20 @@
         </div>
     </div>
     <div class="nickname-context-selector">
-        <small data-i18n="Save to:">Save to:</small>
         <div class="context-buttons">
-            <button class="context-btn" data-context="global" title="Applies everywhere">
-                <i class="fa-solid fa-globe"></i> <span data-i18n="Global">Global</span>
-            </button>
-            <button class="context-btn" data-context="char" title="For this character-persona pair (personas only)">
-                <i class="fa-solid fa-user"></i> <span data-i18n="Char">Char</span>
-            </button>
-            <button class="context-btn" data-context="chat" title="For this chat only">
-                <i class="fa-solid fa-message"></i> <span data-i18n="Chat">Chat</span>
-            </button>
+            <small data-i18n="Save to:">Save to:</small>
+            <div class="context-btn menu_button menu_button_icon" data-context="global" title="Applies everywhere">
+                <i class="fa-solid fa-globe fa-fw"></i>
+                <div data-i18n="Global">Global</div>
+            </div>
+            <div class="context-btn menu_button menu_button_icon" data-context="char" title="For this character-persona pair (personas only)">
+                <i class="fa-solid fa-user fa-fw"></i>
+                <div data-i18n="Char">Char</div>
+            </div>
+            <div class="context-btn menu_button menu_button_icon" data-context="chat" title="For this chat only">
+                <i class="fa-solid fa-message fa-fw"></i>
+                <div data-i18n="Chat">Chat</div>
+            </div>
         </div>
     </div>
     <div class="nickname-summary">

@@ -150,6 +150,7 @@ function updateEditorState(type, container) {
     });
 
     // Update context selector buttons (selected, disabled)
+    // Context buttons are divs (menu_button), so disabled state is class-based.
     container.querySelectorAll('.context-btn').forEach(el => {
         const btn = /** @type {HTMLElement} */ (el);
         const ctx = btn.dataset.context;
@@ -158,7 +159,6 @@ function updateEditorState(type, container) {
             (ctx === ContextLevel.CHAT && !hasActiveChat);
         btn.classList.toggle('selected', ctx === selectedContext);
         btn.classList.toggle('disabled', isDisabled);
-        /** @type {HTMLButtonElement} */ (btn).disabled = isDisabled;
     });
 
     // Update clear button (disabled when no value at selected context)
@@ -215,17 +215,18 @@ function refreshNicknameEditor(type) {
 // ---------------------------------------------------------------------------
 
 /**
- * Injects the nickname editor after the target jQuery element.
+ * Injects the nickname editor using a caller-supplied DOM insertion callback.
  * @param {'user'|'char'} type
- * @param {JQuery} $target - Element to insert after
+ * @param {($editor: JQuery) => boolean} insertFn - Returns false if the target was not found
  */
-async function injectNicknameEditor(type, $target) {
-    if (!$target.length || document.getElementById(EDITOR_IDS[type])) return;
+async function injectNicknameEditor(type, insertFn) {
+    if (document.getElementById(EDITOR_IDS[type])) return;
 
     const html = await renderExtensionTemplateAsync(`third-party/${EXTENSION_NAME}`, 'templates/nickname-editor');
     const $editor = $(html);
     $editor.attr('id', EDITOR_IDS[type]).attr('data-type', type);
-    $target.after($editor);
+
+    if (!insertFn($editor)) return;
 
     const container = document.getElementById(EDITOR_IDS[type]);
     if (container) updateEditorState(type, container);
@@ -233,16 +234,27 @@ async function injectNicknameEditor(type, $target) {
 
 /**
  * Injects the user/persona nickname editor below the persona description textarea.
+ * Matches the Pronouns extension's injection pattern.
  */
 async function injectUserNicknameEditor() {
-    await injectNicknameEditor('user', $('#persona_description'));
+    await injectNicknameEditor('user', ($editor) => {
+        const $target = $('#persona_description');
+        if (!$target.length) return false;
+        $target.after($editor);
+        return true;
+    });
 }
 
 /**
- * Injects the character nickname editor below the character name input.
+ * Injects the character nickname editor before the Creator's Metadata section.
  */
 async function injectCharNicknameEditor() {
-    await injectNicknameEditor('char', $('#name_div'));
+    await injectNicknameEditor('char', ($editor) => {
+        const $target = $('#creator_notes_textarea').closest('.inline-drawer');
+        if (!$target.length) return false;
+        $target.before($editor);
+        return true;
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -254,10 +266,10 @@ async function injectCharNicknameEditor() {
  * Uses event delegation so they work for dynamically injected content.
  */
 function registerEditorEventListeners() {
-    // Context button selection
+    // Context button selection (context buttons are divs — check class for disabled state)
     $(document).on('click', '.nickname-editor-container .context-btn', function () {
         const $btn = $(this);
-        if ($btn.prop('disabled')) return;
+        if ($btn.hasClass('disabled')) return;
 
         const $container = $btn.closest('.nickname-editor-container');
         const type = /** @type {'user'|'char'} */ ($container.attr('data-type'));

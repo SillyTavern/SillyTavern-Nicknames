@@ -1,63 +1,43 @@
-/* Nickname Editor Styles */
+/* Nickname Editor — injected into persona and character panels */
 
-.nickname-editor-container {
-    background: var(--SmartThemeBlurTintColor);
-    border: 1px solid var(--SmartThemeBorderColor);
-    border-radius: 8px;
-    padding: 12px;
-    margin: 10px 0;
-}
-
-/* Header row: label + active context indicators */
-.nickname-editor-header {
+/* Push context-active indicators to the far right of the h4 */
+.nickname-editor-container h4 .context-indicators {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.context-indicators {
-    display: flex;
-    gap: 8px;
+    gap: 6px;
+    margin-left: auto;
 }
 
 .context-icon {
-    opacity: 0.25;
-    transition: opacity 0.2s, color 0.2s;
+    opacity: 0.2;
+    transition: opacity 0.15s, color 0.15s;
     cursor: default;
 }
 
-.context-icon.active {
-    opacity: 1;
-}
+.context-icon.active { opacity: 1; }
 
 .context-icon[data-context="global"].active { color: #4caf50; }
 .context-icon[data-context="char"].active   { color: #2196f3; }
 .context-icon[data-context="chat"].active   { color: #ff9800; }
 
+/* Hide char-level context button, active icon, and summary row for char editors */
+[data-type="char"] .context-btn[data-context="char"],
+[data-type="char"] .context-icon[data-context="char"],
+[data-type="char"] .level-row[data-level="char"] {
+    display: none;
+}
+
 /* Input row */
 .nickname-input-row {
     display: flex;
     gap: 6px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
-.nickname-input {
-    flex: 1;
-}
+.nickname-input { flex: 1; }
 
 .nickname-actions {
     display: flex;
     gap: 4px;
-}
-
-.nickname-actions .menu_button {
-    min-width: 32px;
-    height: 32px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .nickname-actions .menu_button[disabled] {
@@ -65,101 +45,61 @@
     pointer-events: none;
 }
 
-/* Context selector */
-.nickname-context-selector {
-    margin-bottom: 8px;
+/* Context selector row */
+.context-buttons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
 }
 
-.nickname-context-selector small {
-    display: block;
-    margin-bottom: 4px;
+.context-buttons small {
+    margin-right: 2px;
     color: var(--SmartThemeEmColor);
 }
 
-.context-buttons {
-    display: flex;
-    gap: 4px;
-}
-
-.context-btn {
-    flex: 1;
-    padding: 4px 8px;
-    border: 1px solid var(--SmartThemeBorderColor);
-    background: var(--SmartThemeBlurTintColor);
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.85em;
-    transition: background 0.15s, border-color 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-}
-
-.context-btn:hover:not([disabled]) {
-    background: var(--SmartThemeBorderColor);
-}
-
+/* Selected state for context buttons (extends menu_button) */
 .context-btn.selected {
     background: var(--SmartThemeBorderColor);
-    border-color: var(--SmartThemeTextColor);
+    border: 1px solid var(--SmartThemeTextColor);
     font-weight: bold;
 }
 
-.context-btn[disabled] {
-    opacity: 0.3;
+.context-btn.disabled {
+    opacity: 0.35;
     cursor: not-allowed;
-}
-
-/* Hide char-level context button and summary row for the character editor */
-[data-type="char"] .context-btn[data-context="char"],
-[data-type="char"] .level-row[data-level="char"] {
-    display: none;
+    pointer-events: none;
 }
 
 /* Summary drawer */
 .nickname-summary {
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
 .nickname-levels {
-    padding: 8px;
-    background: var(--SmartThemeBlurTintColor);
-    border-radius: 4px;
-    margin-top: 4px;
+    padding: 4px 0;
 }
 
 .level-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 4px 0;
+    padding: 3px 0;
     border-bottom: 1px solid var(--SmartThemeBorderColor);
-    opacity: 0.6;
+    opacity: 0.55;
 }
 
-.level-row:last-child {
-    border-bottom: none;
-}
-
-.level-row.has-value {
-    opacity: 1;
-}
-
-.level-row.effective {
-    font-weight: bold;
-    opacity: 1;
-}
-
-.level-row.disabled {
-    opacity: 0.3;
-}
+.level-row:last-child { border-bottom: none; }
+.level-row.has-value  { opacity: 1; }
+.level-row.effective  { font-weight: bold; opacity: 1; }
+.level-row.disabled   { opacity: 0.25; }
 
 .level-name {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     flex-shrink: 0;
+    margin-right: 8px;
 }
 
 .level-value em {
