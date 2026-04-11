@@ -179,7 +179,7 @@ function updateEditorState(type, container) {
         if (level === 'effective') {
             valueEl.innerHTML = values.effective
                 ? escapeHtml(values.effective)
-                : `<em data-i18n="Using original name">Using original name</em>`;
+                : '<em data-i18n="Using original name">Using original name</em>';
             return;
         }
 
@@ -190,13 +190,13 @@ function updateEditorState(type, container) {
         row.classList.toggle('disabled', isN_A || isUnavailable);
 
         if (isN_A) {
-            valueEl.innerHTML = `<em data-i18n="N/A (personas only)">N/A (personas only)</em>`;
+            valueEl.innerHTML = '<em data-i18n="N/A (personas only)">N/A (personas only)</em>';
         } else if (isUnavailable) {
-            valueEl.innerHTML = `<em data-i18n="N/A (no active chat)">N/A (no active chat)</em>`;
+            valueEl.innerHTML = '<em data-i18n="N/A (no active chat)">N/A (no active chat)</em>';
         } else {
             valueEl.innerHTML = values[level]
                 ? escapeHtml(values[level])
-                : `<em data-i18n="Not set">Not set</em>`;
+                : '<em data-i18n="Not set">Not set</em>';
         }
     });
 }
