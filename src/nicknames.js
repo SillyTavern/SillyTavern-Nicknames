@@ -211,12 +211,12 @@ export function handleNickname(type, value = null, forContext = null, { reset = 
         }
     }
 
-    if (forContext === ContextLevel.CHAR || !forContext) {
-        if (type === 'char' && (value || reset)) {
-            toastr.warning('Cannot set character nickname on character level', 'Nicknames');
-            return null;
-        }
+    if (forContext === ContextLevel.CHAR && type === 'char') {
+        toastr.warning('Cannot set character nickname on character level', 'Nicknames');
+        return null;
+    }
 
+    if ((forContext === ContextLevel.CHAR || !forContext) && type !== 'char') {
         const charKey = getCharKey();
         const nicknameKey = getPersonaKey();
 
