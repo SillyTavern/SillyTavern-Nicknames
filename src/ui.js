@@ -6,12 +6,15 @@
 import { eventSource, event_types } from '../../../../../script.js';
 import { renderExtensionTemplateAsync } from '../../../../extensions.js';
 import { EXTENSION_NAME } from '../index.js';
+import { getContext } from '/scripts/st-context.js';
 import {
     settingKeys,
     nicknameSettings,
     saveSetting,
     handleNickname,
     ContextLevel,
+    getNicknameForPersonaAvatar,
+    getNicknameForCharAvatar,
 } from './nicknames.js';
 
 let settingsUiInjected = false;
@@ -384,13 +387,33 @@ export function registerEventListeners() {
     registerEditorEventListeners();
 
     // On context-change events the old selection is stale — reset and re-resolve.
-    eventSource.on(event_types.PERSONA_CHANGED, () => resetAndRefreshNicknameEditor('user'));
-    eventSource.on(event_types.CHARACTER_SELECTED, () => resetAndRefreshNicknameEditor('char'));
+    eventSource.on(event_types.PERSONA_CHANGED, () => {
+        resetAndRefreshNicknameEditor('user');
+        if (nicknameSettings.useForChatMessages) refreshChatMessages();
+    });
+    eventSource.on(event_types.CHARACTER_SELECTED, () => {
+        resetAndRefreshNicknameEditor('char');
+        if (nicknameSettings.useForChatMessages) refreshChatMessages();
+    });
     eventSource.on(event_types.CHAT_CHANGED, () => {
         resetAndRefreshNicknameEditor('user');
         resetAndRefreshNicknameEditor('char');
         if (nicknameSettings.useForCharList) refreshCharacterList();
         if (nicknameSettings.useForChatMessages) refreshChatMessages();
+    });
+    eventSource.on(event_types.CHAT_LOADED, () => {
+        if (nicknameSettings.useForChatMessages) refreshChatMessages();
+    });
+    eventSource.on(event_types.MORE_MESSAGES_LOADED, () => {
+        if (nicknameSettings.useForChatMessages) refreshChatMessages();
+    });
+
+    // Patch each newly rendered message immediately
+    eventSource.on(event_types.USER_MESSAGE_RENDERED, (/** @type {number} */ messageId) => {
+        applyNicknameToMessage(messageId);
+    });
+    eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, (/** @type {number} */ messageId) => {
+        applyNicknameToMessage(messageId);
     });
 }
 
@@ -404,12 +427,121 @@ export function refreshCharacterList() {
 }
 
 /**
+ * Resolves the nickname to display for a single chat message DOM element.
+ * Strategy:
+ *   1. Look up the message in the chat array by mesid for `original_avatar`.
+ *   2. If is_user: resolve persona nickname via original_avatar key.
+ *   3. If char: resolve char nickname via original_avatar key.
+ *   4. Fallback: match ch_name against character list for a best-effort avatar key.
+ * @param {HTMLElement} mesEl - The `.mes` DOM element
+ * @returns {string|null} Nickname to display, or null if none
+ */
+function resolveNicknameForMesElement(mesEl) {
+    const context = getContext();
+    const mesId = Number(mesEl.getAttribute('mesid'));
+    const isUser = mesEl.getAttribute('is_user') === 'true';
+    const isSystem = mesEl.getAttribute('is_system') === 'true';
+    const chName = mesEl.getAttribute('ch_name') ?? '';
+
+    if (isSystem) return null;
+
+    const chatMessage = context.chat?.[mesId];
+    const originalAvatar = chatMessage?.original_avatar ?? null;
+
+    if (isUser) {
+        // Extract the persona key from the force_avatar URL stored in the chat message object.
+        // The URL format is: /thumbnail?type=persona&file=PERSONA_KEY
+        const forceAvatarUrl = chatMessage?.force_avatar ?? null;
+        if (!forceAvatarUrl) return null;
+
+        let personaKey = null;
+        try {
+            const url = new URL(forceAvatarUrl, window.location.origin);
+            personaKey = url.searchParams.get('file');
+        } catch {
+            return null;
+        }
+        if (!personaKey) return null;
+
+        // For char-level lookup, we need the current char key
+        const charKey = context.characters[context.characterId]?.avatar ?? null;
+        const result = getNicknameForPersonaAvatar(personaKey, charKey);
+        return result.context !== ContextLevel.NONE ? result.name : null;
+    }
+
+    // Character message — resolve avatar key
+    let charAvatarKey = originalAvatar;
+    if (!charAvatarKey) {
+        // For 1:1 chats: use the active character's avatar key directly
+        if (context.characterId !== undefined) {
+            charAvatarKey = context.characters[context.characterId]?.avatar ?? null;
+        }
+        // Fallback: best-effort match by name across all characters
+        if (!charAvatarKey) {
+            charAvatarKey = context.characters.find(c => c.name === chName)?.avatar ?? null;
+        }
+    }
+
+    if (!charAvatarKey) return null;
+
+    const result = getNicknameForCharAvatar(charAvatarKey);
+    return result.context !== ContextLevel.NONE ? result.name : null;
+}
+
+/**
+ * Applies nickname (or restores original name) to a single `.mes` DOM element.
+ * Stores the original name in a data attribute for safe restoration.
+ * @param {HTMLElement} mesEl
+ * @param {boolean} [apply=true] - true to apply nickname, false to restore original
+ */
+function applyNicknameToMesElement(mesEl, apply = true) {
+    const nameTextEl = mesEl.querySelector('.ch_name .name_text');
+    if (!nameTextEl) return;
+
+    if (!apply) {
+        // Restore original name if we stored it
+        const original = mesEl.dataset.nicknameOriginalName;
+        if (original !== undefined) {
+            nameTextEl.textContent = original;
+            nameTextEl.removeAttribute('title');
+            delete mesEl.dataset.nicknameOriginalName;
+        }
+        return;
+    }
+
+    const nickname = resolveNicknameForMesElement(mesEl);
+    if (!nickname) return;
+
+    // Store original only once (don't overwrite if already stored)
+    if (mesEl.dataset.nicknameOriginalName === undefined) {
+        mesEl.dataset.nicknameOriginalName = nameTextEl.textContent;
+    }
+    nameTextEl.textContent = nickname;
+    const isUser = mesEl.getAttribute('is_user') === 'true';
+    const label = isUser ? 'Persona' : 'Character';
+    nameTextEl.title = `[${label}] ${mesEl.dataset.nicknameOriginalName}`;
+}
+
+/**
  * Updates chat message display to show nicknames as sender names.
+ * Iterates all current `.mes` elements in `#chat` and patches their displayed name.
  */
 export function refreshChatMessages() {
+    const enabled = nicknameSettings.useForChatMessages;
+    document.querySelectorAll('#chat .mes').forEach(el => {
+        applyNicknameToMesElement(/** @type {HTMLElement} */ (el), enabled);
+    });
+}
+
+/**
+ * Applies nickname to a single newly-rendered message by its chat index.
+ * Called from USER_MESSAGE_RENDERED / CHARACTER_MESSAGE_RENDERED event handlers.
+ * @param {number} messageId
+ */
+export function applyNicknameToMessage(messageId) {
     if (!nicknameSettings.useForChatMessages) return;
-    // TODO: Implement chat message nickname display
-    console.debug(`[${EXTENSION_NAME}] refreshChatMessages called (not implemented)`);
+    const mesEl = /** @type {HTMLElement|null} */ (document.querySelector(`#chat .mes[mesid="${messageId}"]`));
+    if (mesEl) applyNicknameToMesElement(mesEl, true);
 }
 
 /**

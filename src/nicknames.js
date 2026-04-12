@@ -281,6 +281,58 @@ export function getCharNickname() {
     return handleNickname('char');
 }
 
+/**
+ * Resolves a nickname for an arbitrary persona avatar key, independent of the currently active persona.
+ * Waterfall: chat-level (if charKey given) → char-level (if charKey given) → global.
+ * @param {string} personaKey - The persona avatar key (e.g. "user_avatar.png")
+ * @param {string} [charKey] - Optional character avatar key for chat/char-level lookups
+ * @returns {NicknameResult}
+ */
+export function getNicknameForPersonaAvatar(personaKey, charKey = null) {
+    const s = ensureSettings();
+
+    // Chat-level (requires active chat metadata)
+    const chatMappings = getContext().chatMetadata[EXTENSION_KEY];
+    if (chatMappings?.personas?.[personaKey]) {
+        return { context: ContextLevel.CHAT, name: chatMappings.personas[personaKey] };
+    }
+
+    // Char-level (persona nickname for specific character)
+    if (charKey && s.mappings.char[charKey]?.personas?.[personaKey]) {
+        return { context: ContextLevel.CHAR, name: s.mappings.char[charKey].personas[personaKey] };
+    }
+
+    // Global-level
+    if (s.mappings.global.personas[personaKey]) {
+        return { context: ContextLevel.GLOBAL, name: s.mappings.global.personas[personaKey] };
+    }
+
+    return { context: ContextLevel.NONE, name: null };
+}
+
+/**
+ * Resolves a nickname for an arbitrary character avatar key, independent of the currently active character.
+ * Waterfall: chat-level → global.
+ * @param {string} charAvatarKey - The character avatar key (e.g. "char.png")
+ * @returns {NicknameResult}
+ */
+export function getNicknameForCharAvatar(charAvatarKey) {
+    const s = ensureSettings();
+
+    // Chat-level
+    const chatMappings = getContext().chatMetadata[EXTENSION_KEY];
+    if (chatMappings?.chars?.[charAvatarKey]) {
+        return { context: ContextLevel.CHAT, name: chatMappings.chars[charAvatarKey] };
+    }
+
+    // Global-level
+    if (s.mappings.global.chars[charAvatarKey]) {
+        return { context: ContextLevel.GLOBAL, name: s.mappings.global.chars[charAvatarKey] };
+    }
+
+    return { context: ContextLevel.NONE, name: null };
+}
+
 // ---------------------------------------------------------------------------
 // Migration Helpers
 // ---------------------------------------------------------------------------
