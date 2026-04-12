@@ -26,21 +26,17 @@ const EDITOR_IDS = {
 // Settings UI
 // ---------------------------------------------------------------------------
 
-function onCharListToggleChange(event) {
-    const enabled = $(event.currentTarget).is(':checked');
-    saveSetting(settingKeys.USE_FOR_CHAR_LIST, enabled);
-    refreshCharacterList();
-}
-
-function onChatMessagesToggleChange(event) {
-    const enabled = $(event.currentTarget).is(':checked');
-    saveSetting(settingKeys.USE_FOR_CHAT_MESSAGES, enabled);
-    refreshChatMessages();
-}
-
-function onMacrosToggleChange(event) {
-    const enabled = $(event.currentTarget).is(':checked');
-    saveSetting(settingKeys.USE_FOR_MACROS, enabled);
+/**
+ * Creates a settings toggle change handler for a given key with an optional post-change refresh.
+ * @param {string} key
+ * @param {Function} [refreshFn]
+ */
+function createSettingToggleHandler(key, refreshFn) {
+    return function (event) {
+        const enabled = $(event.currentTarget).is(':checked');
+        saveSetting(key, enabled);
+        refreshFn?.();
+    };
 }
 
 async function injectSettingsUI() {
@@ -59,15 +55,15 @@ async function injectSettingsUI() {
 
     $('#nicknames_use_for_char_list')
         .prop('checked', nicknameSettings.useForCharList)
-        .on('change', onCharListToggleChange);
+        .on('change', createSettingToggleHandler(settingKeys.USE_FOR_CHAR_LIST, refreshCharacterList));
 
     $('#nicknames_use_for_chat_messages')
         .prop('checked', nicknameSettings.useForChatMessages)
-        .on('change', onChatMessagesToggleChange);
+        .on('change', createSettingToggleHandler(settingKeys.USE_FOR_CHAT_MESSAGES, refreshChatMessages));
 
     $('#nicknames_use_for_macros')
         .prop('checked', nicknameSettings.useForMacros)
-        .on('change', onMacrosToggleChange);
+        .on('change', createSettingToggleHandler(settingKeys.USE_FOR_MACROS));
 
     settingsUiInjected = true;
 }
@@ -110,19 +106,13 @@ function getSelectedContext(container) {
 
 /**
  * Resolves the initial context to pre-select on first render.
- * Picks the most specific active context that is actually available for this editor.
- * Priority: chat > char (user only) > global.
- * Falls back to global when no nickname is set yet.
- * @param {string} activeContext - The effective context from the data layer
- * @param {boolean} isCharLevelAvailable - Only true for user/persona editors
- * @param {boolean} hasActiveChat
+ * Trusts the data layer's activeContext directly — priority is already encoded there.
+ * Falls back to global when no nickname is set (NONE).
+ * @param {string} activeContext - The effective context returned by the data layer
  * @returns {string}
  */
-function resolveInitialContext(activeContext, isCharLevelAvailable, hasActiveChat) {
-    if (activeContext === ContextLevel.CHAT && hasActiveChat) return ContextLevel.CHAT;
-    if (activeContext === ContextLevel.CHAR && isCharLevelAvailable) return ContextLevel.CHAR;
-    if (activeContext === ContextLevel.GLOBAL) return ContextLevel.GLOBAL;
-    return ContextLevel.GLOBAL;
+function resolveInitialContext(activeContext) {
+    return activeContext !== ContextLevel.NONE ? activeContext : ContextLevel.GLOBAL;
 }
 
 /**
@@ -162,7 +152,7 @@ function updateEditorState(type, container) {
         (currentSelection === ContextLevel.CHAT && !hasActiveChat) ||
         (currentSelection === ContextLevel.CHAR && !isCharLevelAvailable);
     const selectedContext = (!hasSelection || currentIsUnavailable)
-        ? resolveInitialContext(values.activeContext, isCharLevelAvailable, hasActiveChat)
+        ? resolveInitialContext(values.activeContext)
         : currentSelection;
 
     // Update input (skip if user is actively typing)
@@ -304,22 +294,10 @@ function registerEditorEventListeners() {
         const type = /** @type {'user'|'char'} */ ($container.attr('data-type'));
         if (!type) return;
 
+        // Mark the selection, then let updateEditorState handle all rendering
         $container.find('.context-btn').removeClass('selected');
         $btn.addClass('selected');
-
-        // Update input to show value for newly selected context
-        const values = getAllNicknameValues(type);
-        const ctx = /** @type {string} */ ($btn.data('context'));
-        const input = /** @type {HTMLInputElement|null} */ ($container.find('.nickname-input')[0]);
-        if (input) input.value = values[ctx] || '';
-
-        // Update clear button state for the new context
-        const clearBtn = /** @type {HTMLButtonElement|null} */ ($container.find('.nickname-clear-btn')[0]);
-        if (clearBtn) {
-            const hasValue = !!values[ctx];
-            clearBtn.classList.toggle('disabled', !hasValue);
-            clearBtn.disabled = !hasValue;
-        }
+        updateEditorState(type, $container[0]);
     });
 
     // Save button
@@ -386,11 +364,8 @@ export function registerEventListeners() {
     // Refresh character editor on character selection
     eventSource.on(event_types.CHARACTER_SELECTED, () => refreshNicknameEditor('char'));
 
-    // Refresh both on chat change (locked persona or character may have changed)
-    eventSource.on(event_types.CHAT_CHANGED, () => {
-        refreshNicknameEditor('user');
-        refreshNicknameEditor('char');
-    });
+    // Refresh everything on chat change (context, character, display may all have shifted)
+    eventSource.on(event_types.CHAT_CHANGED, () => refreshAllUI());
 }
 
 /**
