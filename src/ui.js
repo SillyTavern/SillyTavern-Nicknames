@@ -328,9 +328,15 @@ function registerEditorEventListeners() {
         }
 
         const context = getSelectedContext($container[0]);
-        handleNickname(type, value, context);
+        const currentNickname = handleNickname(type, null, context);
+
+        // Update nickname
+        const nickname = handleNickname(type, value, context);
         refreshAllUI();
-        toastr.success(`Nickname saved to ${context} level`, 'Nicknames');
+
+        if (currentNickname.name !== nickname.name) {
+            toastr.success(`Nickname saved to ${context} level`, 'Nicknames');
+        }
     });
 
     // Clear button
@@ -340,9 +346,14 @@ function registerEditorEventListeners() {
         if (!type) return;
 
         const context = getSelectedContext($container[0]);
+        const currentNickname = handleNickname(type, null, context);
+
         handleNickname(type, null, context, { reset: true });
         refreshAllUI();
-        toastr.info(`Nickname cleared from ${context} level`, 'Nicknames');
+
+        if (currentNickname.context !== ContextLevel.NONE) {
+            toastr.info(`Nickname cleared from ${context} level`, 'Nicknames');
+        }
     });
 
     // Enter key submits save
