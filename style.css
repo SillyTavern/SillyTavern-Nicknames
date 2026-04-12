@@ -1,5 +1,11 @@
 /* Nickname Editor — injected into persona and character panels */
 
+:root {
+    --nicknames-global-color: #4caf50;
+    --nicknames-char-color: #2196f3;
+    --nicknames-chat-color: #ff9800;
+}
+
 /* Push context-active indicators to the far right of the h4.
    flex layout applied via ST class flex-container on the element itself. */
 .nickname-editor-container h4 .context-indicators {
@@ -14,9 +20,9 @@
 
 .context-icon.active { opacity: 1; }
 
-.context-icon[data-context="global"].active { color: #4caf50; }
-.context-icon[data-context="char"].active   { color: #2196f3; }
-.context-icon[data-context="chat"].active   { color: #ff9800; }
+.context-icon[data-context="global"].active { color: var(--nicknames-global-color); }
+.context-icon[data-context="char"].active   { color: var(--nicknames-char-color); }
+.context-icon[data-context="chat"].active   { color: var(--nicknames-chat-color); }
 
 /* Hide char-level context button, active icon, and summary row for char editors */
 [data-type="char"] .context-btn[data-context="char"],
@@ -37,9 +43,28 @@
 
 /* Selected state for context buttons (extends menu_button) */
 .context-btn.selected {
-    background: var(--SmartThemeBorderColor);
-    border: 1px solid var(--SmartThemeTextColor);
     font-weight: bold;
+}
+
+.context-btn[data-context="global"].selected {
+    border-color: color-mix(in srgb, var(--nicknames-global-color) 50%, var(--SmartThemeBorderColor));
+}
+.context-btn[data-context="global"].selected i {
+    color: var(--nicknames-global-color);
+}
+
+.context-btn[data-context="char"].selected {
+    border-color: color-mix(in srgb, var(--nicknames-char-color) 50%, var(--SmartThemeBorderColor));
+}
+.context-btn[data-context="char"].selected i {
+    color: var(--nicknames-char-color);
+}
+
+.context-btn[data-context="chat"].selected {
+    border-color: color-mix(in srgb, var(--nicknames-chat-color) 50%, var(--SmartThemeBorderColor));
+}
+.context-btn[data-context="chat"].selected i {
+    color: var(--nicknames-chat-color);
 }
 
 .context-btn.disabled {
