@@ -417,13 +417,147 @@ export function registerEventListeners() {
     });
 }
 
+// ---------------------------------------------------------------------------
+// Character & Persona List Nickname Display
+// ---------------------------------------------------------------------------
+
+/** @type {MutationObserver|null} */
+let charListObserver = null;
+
 /**
- * Updates character list display to show nicknames.
+ * Applies or restores a nickname on a single character list item (`.character_select`).
+ * @param {HTMLElement} el
+ * @param {boolean} apply
+ */
+function applyNicknameToCharItem(el, apply) {
+    const context = getContext();
+    const chNameEl = el.querySelector('.ch_name');
+    if (!chNameEl || !(chNameEl instanceof HTMLElement)) return;
+
+    if (!apply) {
+        const original = el.dataset.nicknameOriginalName;
+        if (original !== undefined) {
+            chNameEl.textContent = original;
+            chNameEl.removeAttribute('title');
+            delete el.dataset.nicknameOriginalName;
+        }
+        return;
+    }
+
+    const chid = Number(el.getAttribute('data-chid'));
+    const char = context.characters[chid];
+    if (!char?.avatar) return;
+
+    const result = getNicknameForCharAvatar(char.avatar);
+    if (result.context === ContextLevel.NONE) return;
+
+    if (el.dataset.nicknameOriginalName === undefined) {
+        el.dataset.nicknameOriginalName = chNameEl.textContent;
+    }
+    chNameEl.textContent = result.name;
+    chNameEl.title = `[Character] ${el.dataset.nicknameOriginalName}`;
+}
+
+/**
+ * Applies or restores a nickname on a single persona list item (`.avatar-container`).
+ * @param {HTMLElement} el
+ * @param {boolean} apply
+ */
+function applyNicknameToPersonaItem(el, apply) {
+    const chNameEl = el.querySelector('.ch_name');
+    if (!chNameEl || !(chNameEl instanceof HTMLElement)) return;
+
+    if (!apply) {
+        const original = el.dataset.nicknameOriginalName;
+        if (original !== undefined) {
+            chNameEl.textContent = original;
+            chNameEl.removeAttribute('title');
+            delete el.dataset.nicknameOriginalName;
+        }
+        return;
+    }
+
+    const avatarId = el.getAttribute('data-avatar-id');
+    if (!avatarId) return;
+
+    // For persona nicknames, char-level lookup requires the active char key
+    const context = getContext();
+    const charKey = context.characters[context.characterId]?.avatar ?? null;
+    const result = getNicknameForPersonaAvatar(avatarId, charKey);
+    if (result.context === ContextLevel.NONE) return;
+
+    if (el.dataset.nicknameOriginalName === undefined) {
+        el.dataset.nicknameOriginalName = chNameEl.textContent;
+    }
+    chNameEl.textContent = result.name;
+    chNameEl.title = `[Persona] ${el.dataset.nicknameOriginalName}`;
+}
+
+/**
+ * Patches all currently rendered character and persona list items.
+ * @param {boolean} apply
+ */
+function patchAllListItems(apply) {
+    document.querySelectorAll('#rm_print_characters_block .character_select').forEach(el => {
+        applyNicknameToCharItem(/** @type {HTMLElement} */ (el), apply);
+    });
+    document.querySelectorAll('#user_avatar_block .avatar-container').forEach(el => {
+        applyNicknameToPersonaItem(/** @type {HTMLElement} */ (el), apply);
+    });
+}
+
+/**
+ * MutationObserver callback — patches newly added character/persona list items.
+ * @param {MutationRecord[]} mutations
+ */
+function onCharListMutation(mutations) {
+    if (!nicknameSettings.useForCharList) return;
+    for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+            if (!(node instanceof HTMLElement)) continue;
+            // Character list items added directly
+            if (node.matches('.character_select')) {
+                applyNicknameToCharItem(node, true);
+            } else {
+                node.querySelectorAll('.character_select').forEach(el => {
+                    applyNicknameToCharItem(/** @type {HTMLElement} */ (el), true);
+                });
+            }
+            // Persona list items added directly
+            if (node.matches('.avatar-container')) {
+                applyNicknameToPersonaItem(node, true);
+            } else {
+                node.querySelectorAll('.avatar-container').forEach(el => {
+                    applyNicknameToPersonaItem(/** @type {HTMLElement} */ (el), true);
+                });
+            }
+        }
+    }
+}
+
+/**
+ * Updates character and persona list display to show nicknames.
+ * Starts a MutationObserver to patch items as they are rendered.
+ * When disabled, restores all original names and disconnects the observer.
  */
 export function refreshCharacterList() {
-    if (!nicknameSettings.useForCharList) return;
-    // TODO: Implement character list nickname display
-    console.debug(`[${EXTENSION_NAME}] refreshCharacterList called (not implemented)`);
+    const enabled = nicknameSettings.useForCharList;
+
+    // Always patch/restore what is currently in the DOM
+    patchAllListItems(enabled);
+
+    if (enabled) {
+        if (!charListObserver) {
+            charListObserver = new MutationObserver(onCharListMutation);
+            const charBlock = document.getElementById('rm_print_characters_block');
+            const personaBlock = document.getElementById('user_avatar_block');
+            if (charBlock) charListObserver.observe(charBlock, { childList: true, subtree: true });
+            if (personaBlock) charListObserver.observe(personaBlock, { childList: true, subtree: true });
+        }
+    } else {
+        charListObserver?.disconnect();
+        charListObserver = null;
+    }
 }
 
 /**
@@ -496,7 +630,7 @@ function resolveNicknameForMesElement(mesEl) {
  */
 function applyNicknameToMesElement(mesEl, apply = true) {
     const nameTextEl = mesEl.querySelector('.ch_name .name_text');
-    if (!nameTextEl) return;
+    if (!nameTextEl || !(nameTextEl instanceof HTMLElement)) return;
 
     if (!apply) {
         // Restore original name if we stored it
