@@ -1,9 +1,8 @@
 /* Nickname Editor — injected into persona and character panels */
 
-/* Push context-active indicators to the far right of the h4 */
+/* Push context-active indicators to the far right of the h4.
+   flex layout applied via ST class flex-container on the element itself. */
 .nickname-editor-container h4 .context-indicators {
-    display: flex;
-    gap: 6px;
     margin-left: auto;
 }
 
@@ -26,31 +25,9 @@
     display: none;
 }
 
-/* Input row */
-.nickname-input-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 6px;
-}
-
-.nickname-input { flex: 1; }
-
-.nickname-actions {
-    display: flex;
-    gap: 4px;
-}
-
 .nickname-actions .menu_button[disabled] {
     opacity: 0.3;
     pointer-events: none;
-}
-
-/* Context selector row */
-.context-buttons {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-wrap: wrap;
 }
 
 .context-buttons small {
@@ -71,7 +48,6 @@
     pointer-events: none;
 }
 
-/* Summary drawer */
 .nickname-summary {
     margin-top: 4px;
 }
@@ -80,10 +56,8 @@
     padding: 4px 0;
 }
 
+/* flex layout applied via ST classes flex-container justifySpaceBetween alignItemsCenter flexNoWrap */
 .level-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     padding: 3px 0;
     border-bottom: 1px solid var(--SmartThemeBorderColor);
     opacity: 0.55;
@@ -94,10 +68,8 @@
 .level-row.effective  { font-weight: bold; opacity: 1; }
 .level-row.disabled   { opacity: 0.25; }
 
+/* flex layout applied via ST classes flex-container alignItemsCenter flexNoWrap */
 .level-name {
-    display: flex;
-    align-items: center;
-    gap: 5px;
     flex-shrink: 0;
     margin-right: 8px;
 }

@@ -3,21 +3,21 @@
         <span data-i18n="Nickname">Nickname</span>
         <i class="fa-solid fa-circle-info opacity50p nickname-extension-icon"
            title="This section is provided by the SillyTavern-Nicknames extension"></i>
-        <div class="context-indicators">
+        <div class="context-indicators flex-container flexNoWrap">
             <i class="fa-solid fa-globe context-icon" data-context="global" title="Global nickname is active"></i>
             <i class="fa-solid fa-user context-icon" data-context="char" title="Character-level nickname is active (personas only)"></i>
             <i class="fa-solid fa-message context-icon" data-context="chat" title="Chat-level nickname is active"></i>
         </div>
     </h4>
-    <div class="nickname-input-row">
-        <input type="text" class="nickname-input text_pole" placeholder="No nickname set" maxlength="100" />
-        <div class="nickname-actions">
+    <div class="nickname-input-row flex-container flexNoWrap">
+        <input type="text" class="nickname-input text_pole flex1" placeholder="No nickname set" maxlength="100" />
+        <div class="nickname-actions flex-container flexNoWrap">
             <button class="nickname-save-btn menu_button fa-solid fa-check" title="Save to selected context"></button>
             <button class="nickname-clear-btn menu_button fa-solid fa-xmark" title="Clear from selected context"></button>
         </div>
     </div>
     <div class="nickname-context-selector">
-        <div class="context-buttons">
+        <div class="context-buttons flex-container alignItemsCenter">
             <small data-i18n="Save to:">Save to:</small>
             <div class="context-btn menu_button menu_button_icon" data-context="global" title="Applies everywhere">
                 <i class="fa-solid fa-globe fa-fw"></i>
@@ -40,20 +40,20 @@
         </div>
         <div class="inline-drawer-content">
             <div class="nickname-levels">
-                <div class="level-row" data-level="global">
-                    <span class="level-name"><i class="fa-solid fa-globe"></i> <span data-i18n="Global:">Global:</span></span>
+                <div class="level-row flex-container justifySpaceBetween alignItemsCenter flexNoWrap" data-level="global">
+                    <span class="level-name flex-container alignItemsCenter flexNoWrap"><i class="fa-solid fa-globe"></i> <span data-i18n="Global:">Global:</span></span>
                     <span class="level-value"></span>
                 </div>
-                <div class="level-row" data-level="char">
-                    <span class="level-name"><i class="fa-solid fa-user"></i> <span data-i18n="Character:">Character:</span></span>
+                <div class="level-row flex-container justifySpaceBetween alignItemsCenter flexNoWrap" data-level="char">
+                    <span class="level-name flex-container alignItemsCenter flexNoWrap"><i class="fa-solid fa-user"></i> <span data-i18n="Character:">Character:</span></span>
                     <span class="level-value"></span>
                 </div>
-                <div class="level-row" data-level="chat">
-                    <span class="level-name"><i class="fa-solid fa-message"></i> <span data-i18n="Chat:">Chat:</span></span>
+                <div class="level-row flex-container justifySpaceBetween alignItemsCenter flexNoWrap" data-level="chat">
+                    <span class="level-name flex-container alignItemsCenter flexNoWrap"><i class="fa-solid fa-message"></i> <span data-i18n="Chat:">Chat:</span></span>
                     <span class="level-value"></span>
                 </div>
-                <div class="level-row effective" data-level="effective">
-                    <span class="level-name"><i class="fa-solid fa-check-circle"></i> <span data-i18n="Effective:">Effective:</span></span>
+                <div class="level-row effective flex-container justifySpaceBetween alignItemsCenter flexNoWrap" data-level="effective">
+                    <span class="level-name flex-container alignItemsCenter flexNoWrap"><i class="fa-solid fa-check-circle"></i> <span data-i18n="Effective:">Effective:</span></span>
                     <span class="level-value"></span>
                 </div>
             </div>
