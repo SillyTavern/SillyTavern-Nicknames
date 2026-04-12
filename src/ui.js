@@ -220,12 +220,26 @@ function updateEditorState(type, container) {
 }
 
 /**
- * Refreshes the editor for a given type, if it is present in the DOM.
+ * Refreshes the editor for a given type, preserving any user-selected context.
+ * Use this after save/clear where the user's context choice should be kept.
  * @param {'user'|'char'} type
  */
 function refreshNicknameEditor(type) {
     const container = document.getElementById(EDITOR_IDS[type]);
     if (container) updateEditorState(type, container);
+}
+
+/**
+ * Resets the editor selection and re-resolves the best context from scratch.
+ * Use this when the persona, character, or chat context changes — the old
+ * selection is stale and the auto-resolve should run again with fresh data.
+ * @param {'user'|'char'} type
+ */
+function resetAndRefreshNicknameEditor(type) {
+    const container = document.getElementById(EDITOR_IDS[type]);
+    if (!container) return;
+    container.querySelectorAll('.context-btn').forEach(btn => btn.classList.remove('selected'));
+    updateEditorState(type, container);
 }
 
 // ---------------------------------------------------------------------------
@@ -358,14 +372,15 @@ export async function injectUI() {
 export function registerEventListeners() {
     registerEditorEventListeners();
 
-    // Refresh persona editor on persona switch
-    eventSource.on(event_types.PERSONA_CHANGED, () => refreshNicknameEditor('user'));
-
-    // Refresh character editor on character selection
-    eventSource.on(event_types.CHARACTER_SELECTED, () => refreshNicknameEditor('char'));
-
-    // Refresh everything on chat change (context, character, display may all have shifted)
-    eventSource.on(event_types.CHAT_CHANGED, () => refreshAllUI());
+    // On context-change events the old selection is stale — reset and re-resolve.
+    eventSource.on(event_types.PERSONA_CHANGED, () => resetAndRefreshNicknameEditor('user'));
+    eventSource.on(event_types.CHARACTER_SELECTED, () => resetAndRefreshNicknameEditor('char'));
+    eventSource.on(event_types.CHAT_CHANGED, () => {
+        resetAndRefreshNicknameEditor('user');
+        resetAndRefreshNicknameEditor('char');
+        if (nicknameSettings.useForCharList) refreshCharacterList();
+        if (nicknameSettings.useForChatMessages) refreshChatMessages();
+    });
 }
 
 /**
