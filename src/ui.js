@@ -109,6 +109,23 @@ function getSelectedContext(container) {
 }
 
 /**
+ * Resolves the initial context to pre-select on first render.
+ * Picks the most specific active context that is actually available for this editor.
+ * Priority: chat > char (user only) > global.
+ * Falls back to global when no nickname is set yet.
+ * @param {string} activeContext - The effective context from the data layer
+ * @param {boolean} isCharLevelAvailable - Only true for user/persona editors
+ * @param {boolean} hasActiveChat
+ * @returns {string}
+ */
+function resolveInitialContext(activeContext, isCharLevelAvailable, hasActiveChat) {
+    if (activeContext === ContextLevel.CHAT && hasActiveChat) return ContextLevel.CHAT;
+    if (activeContext === ContextLevel.CHAR && isCharLevelAvailable) return ContextLevel.CHAR;
+    if (activeContext === ContextLevel.GLOBAL) return ContextLevel.GLOBAL;
+    return ContextLevel.GLOBAL;
+}
+
+/**
  * Safely HTML-encodes a string value.
  * @param {string} str
  * @returns {string}
@@ -133,9 +150,20 @@ function escapeHtml(str) {
  */
 function updateEditorState(type, container) {
     const values = getAllNicknameValues(type);
-    const selectedContext = getSelectedContext(container);
     const hasActiveChat = !!document.querySelector('#chat .mes');
     const isCharLevelAvailable = type === 'user';
+
+    // On first render (no button selected yet), auto-select the most specific
+    // active context so the user immediately sees the currently effective value.
+    // On subsequent renders, keep the user's selection unless it became unavailable.
+    const hasSelection = !!container.querySelector('.context-btn.selected');
+    const currentSelection = getSelectedContext(container);
+    const currentIsUnavailable =
+        (currentSelection === ContextLevel.CHAT && !hasActiveChat) ||
+        (currentSelection === ContextLevel.CHAR && !isCharLevelAvailable);
+    const selectedContext = (!hasSelection || currentIsUnavailable)
+        ? resolveInitialContext(values.activeContext, isCharLevelAvailable, hasActiveChat)
+        : currentSelection;
 
     // Update input (skip if user is actively typing)
     const input = /** @type {HTMLInputElement|null} */ (container.querySelector('.nickname-input'));
@@ -246,11 +274,12 @@ async function injectUserNicknameEditor() {
 }
 
 /**
- * Injects the character nickname editor before the Creator's Metadata section.
+ * Injects the character nickname editor before the Creator's Notes section
+ * (#spoiler_free_desc) in the basic character edit panel.
  */
 async function injectCharNicknameEditor() {
     await injectNicknameEditor('char', ($editor) => {
-        const $target = $('#creator_notes_textarea').closest('.inline-drawer');
+        const $target = $('#spoiler_free_desc');
         if (!$target.length) return false;
         $target.before($editor);
         return true;
