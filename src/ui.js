@@ -383,7 +383,7 @@ export async function injectUI() {
 /**
  * Registers all document-level event listeners.
  */
-export function registerEventListeners() {
+export function registerUIEventListeners() {
     registerEditorEventListeners();
 
     // On context-change events the old selection is stale — reset and re-resolve.

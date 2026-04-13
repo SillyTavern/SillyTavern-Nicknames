@@ -1,9 +1,7 @@
-import { injectUI, registerEventListeners } from './src/ui.js';
-import { ensureSettings, migrateCharKeys, migrateChatCharKeys } from './src/nicknames.js';
+import { injectUI, registerUIEventListeners } from './src/ui.js';
+import { ensureSettings, registerDataEventListeners, cleanAllNicknameData } from './src/nicknames.js';
 import { registerMacroProvider } from './src/macros.js';
 import { registerSlashCommands } from './src/slash-commands.js';
-import { event_types, eventSource } from '/script.js';
-import { getContext } from '/scripts/st-context.js';
 
 export const EXTENSION_KEY = 'nicknames';
 export const EXTENSION_NAME = 'SillyTavern-Nicknames';
@@ -23,12 +21,13 @@ export async function init() {
     const version = SillyTavern.getContext().getExtensionManifest?.(EXTENSION_NAME)?.version ?? null;
     ensureSettings(version);
 
+    registerDataEventListeners();
+
     await injectUI();
-    registerEventListeners();
+    registerUIEventListeners();
 
     registerMacroProvider();
     registerSlashCommands();
-    registerNicknameEvents();
 
     console.debug(`[${EXTENSION_NAME}] Extension activated`);
 
@@ -36,26 +35,13 @@ export async function init() {
 }
 
 /**
- * Registers event listeners for character rename events.
+ * Extension clean hook — called when the extension is uninstalled.
+ * Removes all nickname data from extension settings.
+ * Note: nickname data stored in individual chat files (chat-level mappings)
+ * cannot be automatically cleaned without loading and re-saving every chat.
  */
-function registerNicknameEvents() {
-    eventSource.on(event_types.CHARACTER_RENAMED, /** @param {string} oldAvatarKey @param {string} newAvatarKey */
-        (oldAvatarKey, newAvatarKey) => {
-            migrateCharKeys(oldAvatarKey, newAvatarKey);
-
-            // Also migrate chat-level mappings for current chat
-            /** @type {import('./src/nicknames.js').NicknameMappings} */
-            const chatMappings = getContext().chatMetadata[EXTENSION_KEY];
-            if (chatMappings && chatMappings.chars[oldAvatarKey]) {
-                chatMappings.chars[newAvatarKey] = chatMappings.chars[oldAvatarKey];
-                delete chatMappings.chars[oldAvatarKey];
-                // saveChatDebounced is called in migrateCharKeys via saveSettingsDebounced,
-                // but we might need to save chat separately if we want the chat metadata persisted
-            }
-        });
-
-    eventSource.on(event_types.CHARACTER_RENAMED_IN_PAST_CHAT, /** @param {Array<Object>} chat @param {string} oldAvatarKey @param {string} newAvatarKey */
-        (chat, oldAvatarKey, newAvatarKey) => {
-            migrateChatCharKeys(chat, oldAvatarKey, newAvatarKey);
-        });
+export async function clean() {
+    console.debug(`[${EXTENSION_NAME}] Running clean hook...`);
+    await cleanAllNicknameData();
+    console.debug(`[${EXTENSION_NAME}] Clean complete.`);
 }

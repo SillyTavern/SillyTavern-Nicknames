@@ -2,9 +2,10 @@
  * Core nickname data and settings management for the Nicknames extension.
  */
 
-import { saveSettingsDebounced, saveChatDebounced, user_avatar } from '../../../../../script.js';
+import { saveSettingsDebounced, saveSettings, saveChatDebounced, user_avatar, eventSource, event_types } from '../../../../../script.js';
 import { extension_settings } from '../../../../extensions.js';
 import { EXTENSION_KEY } from '../index.js';
+import { t } from '/scripts/i18n.js';
 
 /** @enum {string} The context levels at which nicknames can be set */
 export const ContextLevel = {
@@ -373,4 +374,170 @@ export function migrateChatCharKeys(chat, oldAvatarKey, newAvatarKey) {
         delete chatMappings.chars[oldAvatarKey];
     }
     // No save, we are modifying an unloaded temporarily queried chat via event here
+}
+
+/**
+ * Migrates a character avatar key in the currently loaded chat's metadata.
+ * @param {string} oldAvatarKey
+ * @param {string} newAvatarKey
+ */
+export function migrateCurrentChatCharKey(oldAvatarKey, newAvatarKey) {
+    /** @type {NicknameMappings} */
+    const chatMappings = getContext().chatMetadata[EXTENSION_KEY];
+    if (chatMappings?.chars[oldAvatarKey]) {
+        chatMappings.chars[newAvatarKey] = chatMappings.chars[oldAvatarKey];
+        delete chatMappings.chars[oldAvatarKey];
+        saveChatDebounced();
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Lifecycle Helpers — Delete
+// ---------------------------------------------------------------------------
+
+/**
+ * Removes all nickname data for a deleted character.
+ * Cleans global char mapping and any char-level persona mappings stored under
+ * this character's key. The current chat's metadata is left as-is — it will
+ * naturally become stale once the chat is gone along with the character.
+ * @param {string} avatarKey - Character avatar key (e.g. "char.png")
+ */
+export function deleteCharNicknameData(avatarKey) {
+    delete settings.mappings.global.chars[avatarKey];
+    delete settings.mappings.char[avatarKey];
+    saveSettingsDebounced();
+}
+
+/**
+ * Removes all nickname data for a deleted persona.
+ * Cleans global persona mapping and char-level entries across all characters.
+ * @param {string} avatarId - Persona avatar ID (e.g. "user.png")
+ */
+export function deletePersonaNicknameData(avatarId) {
+    delete settings.mappings.global.personas[avatarId];
+    for (const charData of Object.values(settings.mappings.char)) {
+        delete charData.personas[avatarId];
+    }
+    saveSettingsDebounced();
+}
+
+// ---------------------------------------------------------------------------
+// Lifecycle Helpers — Duplicate / Copy
+// ---------------------------------------------------------------------------
+
+/**
+ * Copies all nickname data from a source character to a new (duplicated) character.
+ * Copies global char nickname and char-level persona mappings.
+ * No-op if the source character has no nickname data.
+ * @param {string} sourceAvatarKey - Source character avatar key
+ * @param {string} targetAvatarKey - New character avatar key
+ */
+export function copyCharNicknameData(sourceAvatarKey, targetAvatarKey) {
+    let changed = false;
+
+    if (settings.mappings.global.chars[sourceAvatarKey]) {
+        settings.mappings.global.chars[targetAvatarKey] = settings.mappings.global.chars[sourceAvatarKey];
+        changed = true;
+    }
+    if (settings.mappings.char[sourceAvatarKey]) {
+        settings.mappings.char[targetAvatarKey] = structuredClone(settings.mappings.char[sourceAvatarKey]);
+        changed = true;
+    }
+
+    if (changed) saveSettingsDebounced();
+}
+
+/**
+ * Copies all nickname data from a source persona to a new (duplicated) persona.
+ * Copies global persona nickname and all char-level persona entries.
+ * No-op if the source persona has no nickname data.
+ * @param {string} sourceAvatarId - Source persona avatar ID
+ * @param {string} targetAvatarId - New persona avatar ID
+ */
+export function copyPersonaNicknameData(sourceAvatarId, targetAvatarId) {
+    let changed = false;
+
+    if (settings.mappings.global.personas[sourceAvatarId]) {
+        settings.mappings.global.personas[targetAvatarId] = settings.mappings.global.personas[sourceAvatarId];
+        changed = true;
+    }
+    for (const charData of Object.values(settings.mappings.char)) {
+        if (charData.personas[sourceAvatarId]) {
+            charData.personas[targetAvatarId] = charData.personas[sourceAvatarId];
+            changed = true;
+        }
+    }
+
+    if (changed) saveSettingsDebounced();
+}
+
+// ---------------------------------------------------------------------------
+// Lifecycle Helpers — Clean (uninstall)
+// ---------------------------------------------------------------------------
+
+/**
+ * Removes all nickname data added by this extension:
+ *  - The entire extension settings block (all global + char-level mappings)
+ * Note: chat-level metadata (stored in individual chat files) cannot be
+ * cleaned up automatically without loading and re-saving every chat file.
+ * Uses a direct (non-debounced) save to guarantee the wipe is persisted
+ * before any page reload following an extension uninstall.
+ */
+export async function cleanAllNicknameData() {
+    delete extension_settings[EXTENSION_KEY];
+    await saveSettings();
+
+    // Warn chat-based nicknames will not be cleaned up
+    toastr.warning(t`Chat-based nickname metadata will not be removed automatically.`, t`Nicknames Cleanup`);
+}
+
+// ---------------------------------------------------------------------------
+// Data Event Listeners
+// ---------------------------------------------------------------------------
+
+/**
+ * Registers data-layer event listeners for character and persona lifecycle events.
+ * Call once during extension initialization.
+ */
+export function registerDataEventListeners() {
+    // --- Character rename ---
+    eventSource.on(event_types.CHARACTER_RENAMED, /** @param {string} oldAvatarKey @param {string} newAvatarKey */
+        (oldAvatarKey, newAvatarKey) => {
+            migrateCharKeys(oldAvatarKey, newAvatarKey);
+            migrateCurrentChatCharKey(oldAvatarKey, newAvatarKey);
+        });
+
+    eventSource.on(event_types.CHARACTER_RENAMED_IN_PAST_CHAT, /** @param {Array<Object>} chat @param {string} oldAvatarKey @param {string} newAvatarKey */
+        (chat, oldAvatarKey, newAvatarKey) => {
+            migrateChatCharKeys(chat, oldAvatarKey, newAvatarKey);
+        });
+
+    // --- Character delete ---
+    eventSource.on(event_types.CHARACTER_DELETED, /** @param {{ character: { avatar: string } }} data */
+        (data) => {
+            const avatar = data?.character?.avatar;
+            if (avatar) deleteCharNicknameData(avatar);
+        });
+
+    // --- Character duplicate ---
+    eventSource.on(event_types.CHARACTER_DUPLICATED, /** @param {{ oldAvatar: string, newAvatar: string }} data */
+        (data) => {
+            if (data?.oldAvatar && data?.newAvatar) {
+                copyCharNicknameData(data.oldAvatar, data.newAvatar);
+            }
+        });
+
+    // --- Persona delete ---
+    eventSource.on(event_types.PERSONA_DELETED, /** @param {{ avatarId: string }} data */
+        (data) => {
+            if (data?.avatarId) deletePersonaNicknameData(data.avatarId);
+        });
+
+    // --- Persona duplicate (requires ST core PR #5448) ---
+    eventSource.on(event_types.PERSONA_CREATED, /** @param {{ avatarId: string, duplicatedFromAvatarId?: string }} data */
+        (data) => {
+            if (data?.duplicatedFromAvatarId && data?.avatarId) {
+                copyPersonaNicknameData(data.duplicatedFromAvatarId, data.avatarId);
+            }
+        });
 }

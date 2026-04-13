@@ -76,7 +76,11 @@ All settings are **disabled by default** — enable them as needed:
 - [ ] Nickname editor in Persona/Character Management UI
 - [ ] Character list nickname display
 - [ ] Chat message sender name replacement
-- [ ] Import/export nickname mappings
+- [ ] Duplication of char/persona should copy all nicknames too
+- [ ] Compatibility with `nickname` field of official [charv3 spec](https://github.com/kwaroran/character-card-spec-v3/blob/main/SPEC_V3.md#nickname)
+- [ ] Compatibility with nickname field on ChubAI
+- [ ] Import/export nicknames of chars with the char
+- [ ] Import/export nickname mappings (all of them)
 
 ## License
 
