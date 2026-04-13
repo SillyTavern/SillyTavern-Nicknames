@@ -2,7 +2,7 @@
  * Core nickname data and settings management for the Nicknames extension.
  */
 
-import { saveSettingsDebounced, saveSettings, saveChatDebounced, user_avatar, eventSource, event_types } from '../../../../../script.js';
+import { saveSettingsDebounced, saveSettings, saveChatDebounced, saveCharacterDebounced, user_avatar, eventSource, event_types } from '../../../../../script.js';
 import { extension_settings } from '../../../../extensions.js';
 import { EXTENSION_KEY } from '../index.js';
 import { t } from '/scripts/i18n.js';
@@ -53,6 +53,7 @@ export const settingKeys = Object.freeze({
     USE_FOR_CHAR_LIST: 'useForCharList',
     USE_FOR_CHAT_MESSAGES: 'useForChatMessages',
     USE_FOR_MACROS: 'useForMacros',
+    USE_V3_SPEC_COMPAT: 'useV3SpecCompat',
 });
 
 const defaultSettings = Object.freeze({
@@ -60,6 +61,7 @@ const defaultSettings = Object.freeze({
     [settingKeys.USE_FOR_CHAR_LIST]: false,
     [settingKeys.USE_FOR_CHAT_MESSAGES]: false,
     [settingKeys.USE_FOR_MACROS]: false,
+    [settingKeys.USE_V3_SPEC_COMPAT]: false,
     mappings: {
         char: {},
         global: {
@@ -145,6 +147,9 @@ export const nicknameSettings = {
     },
     get useForMacros() {
         return Boolean(ensureSettings()[settingKeys.USE_FOR_MACROS]);
+    },
+    get useV3SpecCompat() {
+        return Boolean(ensureSettings()[settingKeys.USE_V3_SPEC_COMPAT]);
     },
 };
 
@@ -248,12 +253,14 @@ export function handleNickname(type, value = null, forContext = null, { reset = 
         if (reset) {
             delete settings.mappings.global[globalTypeKey][nicknameKey];
             saveSettingsDebounced();
+            if (type === 'char' && nicknameKey) syncNicknameToV3SpecField(nicknameKey);
             return null;
         }
         // Set -> return
         if (value) {
             settings.mappings.global[globalTypeKey][nicknameKey] = value;
             saveSettingsDebounced();
+            if (type === 'char' && nicknameKey) syncNicknameToV3SpecField(nicknameKey);
             return { context: ContextLevel.GLOBAL, name: value };
         }
         // Return if set
@@ -332,6 +339,96 @@ export function getNicknameForCharAvatar(charAvatarKey) {
     }
 
     return { context: ContextLevel.NONE, name: null };
+}
+
+// ---------------------------------------------------------------------------
+// V3 Spec Compatibility
+// ---------------------------------------------------------------------------
+
+/**
+ * Writes the current global char nickname back to `character.data.nickname` on
+ * the in-memory character object and triggers a debounced card save, so the value
+ * is persisted into the exported PNG/card.
+ * No-op when not in an active character edit context or compat is disabled.
+ * @param {string} charAvatarKey - Character avatar key (e.g. "char.png")
+ */
+export function syncNicknameToV3SpecField(charAvatarKey) {
+    if (!nicknameSettings.useV3SpecCompat) return;
+
+    const context = getContext();
+    const character = context.characters.find(c => c.avatar === charAvatarKey);
+    if (!character) return;
+
+    const nickname = settings.mappings.global.chars[charAvatarKey] ?? '';
+    character.data ??= {};
+    character.data.nickname = nickname || undefined;
+    saveCharacterDebounced();
+}
+
+/**
+ * Returns the `data.nickname` value from the character card, or null if absent.
+ * @param {string} charAvatarKey
+ * @returns {string|null}
+ */
+export function getV3SpecNickname(charAvatarKey) {
+    const character = getContext().characters.find(c => c.avatar === charAvatarKey);
+    return character?.data?.nickname?.trim() || null;
+}
+
+/**
+ * Directly writes a value into the global char nickname slot and saves settings.
+ * Does NOT sync back to the card (caller's responsibility if needed).
+ * @param {string} charAvatarKey
+ * @param {string} nickname
+ */
+export function applyGlobalCharNickname(charAvatarKey, nickname) {
+    settings.mappings.global.chars[charAvatarKey] = nickname;
+    saveSettingsDebounced();
+}
+
+/**
+ * Handles the V3 spec nickname sync when a character is loaded.
+ * Silently resolves non-conflicting cases; calls `onConflict` when both values
+ * are set and differ, allowing the caller (UI layer) to handle user interaction.
+ *
+ * Cases:
+ *  - Card has nickname, global is empty  → seed global from card (silent)
+ *  - Global has nickname, card is empty  → write global into card (silent)
+ *  - Both set and identical              → no-op (already in sync)
+ *  - Both set and different              → call onConflict(globalNickname, specNickname)
+ *
+ * @param {string} charAvatarKey
+ * @param {object} [options={}]
+ * @param {(charAvatarKey: string, globalNickname: string, specNickname: string) => Promise<void>|null} [options.onConflict=null]
+ */
+export async function seedNicknameFromV3SpecField(charAvatarKey, { onConflict = null } = {}) {
+    if (!nicknameSettings.useV3SpecCompat) return;
+
+    const globalNickname = settings.mappings.global.chars[charAvatarKey] || null;
+    const specNickname = getV3SpecNickname(charAvatarKey);
+
+    if (!globalNickname && !specNickname) return;
+
+    if (!globalNickname && specNickname) {
+        // Seed global from card
+        console.debug(`[Nicknames] V3 compat: seeding global nickname "${specNickname}" from card for ${charAvatarKey}`);
+        applyGlobalCharNickname(charAvatarKey, specNickname);
+        return;
+    }
+
+    if (globalNickname && !specNickname) {
+        // Write global into card
+        console.debug(`[Nicknames] V3 compat: writing global nickname "${globalNickname}" into card for ${charAvatarKey}`);
+        syncNicknameToV3SpecField(charAvatarKey);
+        return;
+    }
+
+    if (globalNickname === specNickname) return;
+
+    // Both set and different — delegate to caller
+    if (onConflict) {
+        await onConflict(charAvatarKey, globalNickname, specNickname);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -498,8 +595,10 @@ export async function cleanAllNicknameData() {
 /**
  * Registers data-layer event listeners for character and persona lifecycle events.
  * Call once during extension initialization.
+ * @param {object} [options={}]
+ * @param {(charAvatarKey: string, globalNickname: string, specNickname: string) => Promise<void>|null} [options.onV3SpecConflict=null] - Called when both global and card nicknames are set and differ.
  */
-export function registerDataEventListeners() {
+export function registerDataEventListeners({ onV3SpecConflict = null } = {}) {
     // --- Character rename ---
     eventSource.on(event_types.CHARACTER_RENAMED, /** @param {string} oldAvatarKey @param {string} newAvatarKey */
         (oldAvatarKey, newAvatarKey) => {
@@ -540,4 +639,10 @@ export function registerDataEventListeners() {
                 copyPersonaNicknameData(data.duplicatedFromAvatarId, data.avatarId);
             }
         });
+
+    // --- V3 spec compat: sync global nickname with card when a chat is opened ---
+    eventSource.on(event_types.CHAT_CHANGED, async () => {
+        const charKey = getContext().characters[getContext().characterId]?.avatar;
+        if (charKey) await seedNicknameFromV3SpecField(charKey, { onConflict: onV3SpecConflict });
+    });
 }

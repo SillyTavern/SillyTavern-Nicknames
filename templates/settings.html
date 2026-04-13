@@ -5,24 +5,41 @@
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
         </div>
         <div class="inline-drawer-content">
-            <div class="flex-container flexFlowColumn">
+            <div class="flex-container flexFlowColumn nicknames-settings-usage">
                 <small data-i18n="Configure where nicknames should be used throughout SillyTavern.">
                     Configure where nicknames should be used throughout SillyTavern.
                 </small>
                 <label class="checkbox_label" for="nicknames_use_for_char_list">
                     <input type="checkbox" id="nicknames_use_for_char_list" />
                     <span title="Display nicknames instead of original names in the character and persona lists."
-                        data-i18n="Character &amp; persona list">Character &amp; persona list</span>
+                        data-i18n="Character &amp; Persona List">Character &amp; Persona List</span>
                 </label>
                 <label class="checkbox_label" for="nicknames_use_for_chat_messages">
                     <input type="checkbox" id="nicknames_use_for_chat_messages" />
                     <span title="Use nicknames as sender names for chat messages."
-                        data-i18n="Chat messages">Chat messages</span>
+                        data-i18n="Chat Messages">Chat Messages</span>
                 </label>
                 <label class="checkbox_label" for="nicknames_use_for_macros">
                     <input type="checkbox" id="nicknames_use_for_macros" />
                     <span title="Replace &#123;&#123;user&#125;&#125; and &#123;&#123;char&#125;&#125; macros with nicknames in prompts sent to the AI."
-                        data-i18n="Macros & prompts (&#123;&#123;user&#125;&#125;/&#123;&#123;char&#125;&#125;)">Macros & prompts (&#123;&#123;user&#125;&#125;/&#123;&#123;char&#125;&#125;)</span>
+                        data-i18n="Macros & Prompts (&#123;&#123;user&#125;&#125;/&#123;&#123;char&#125;&#125;)">Macros & Prompts (&#123;&#123;user&#125;&#125;/&#123;&#123;char&#125;&#125;)</span>
+                </label>
+            </div>
+            <div class="flex-container flexFlowColumn nicknames-settings-compatibility">
+                <small data-i18n="Compatibility">Compatibility</small>
+                <label class="checkbox_label" for="nicknames_use_v3_spec_compat">
+                    <input type="checkbox" id="nicknames_use_v3_spec_compat" />
+                    <span title="When enabled, the global character nickname is kept in sync with the character card's V3 spec 'nickname' field. Loading a character with a nickname set will seed the global nickname (if none is set). Saving the global nickname will write it back into the card."
+                        data-i18n="V3 Spec Nickname Compatibility">V3 Spec Nickname Compatibility</span>
+                    <a href="https://github.com/kwaroran/character-card-spec-v3/blob/main/SPEC_V3.md#nickname"
+                        target="_blank" rel="noopener noreferrer"
+                        title="Character Card V3 spec — nickname field"
+                        class="fa-solid fa-circle-question opacity50p interactable"></a>
+                    <i id="nicknames_v3_compat_warning"
+                        class="fa-solid fa-triangle-exclamation hidden"
+                        style="color: orange;"
+                        title="The V3 spec requires {{char}} to resolve to the nickname. Enable 'Macros &amp; prompts' above to comply with the spec."
+                        data-i18n="[title]The V3 spec requires {{char}} to resolve to the nickname. Enable 'Macros &amp; prompts' above to comply with the spec."></i>
                 </label>
             </div>
         </div>

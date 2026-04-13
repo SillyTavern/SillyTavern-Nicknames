@@ -1,4 +1,4 @@
-import { injectUI, registerUIEventListeners } from './src/ui.js';
+import { injectUI, registerUIEventListeners, resolveV3SpecConflict } from './src/ui.js';
 import { ensureSettings, registerDataEventListeners, cleanAllNicknameData } from './src/nicknames.js';
 import { registerMacroProvider } from './src/macros.js';
 import { registerSlashCommands } from './src/slash-commands.js';
@@ -21,7 +21,7 @@ export async function init() {
     const version = SillyTavern.getContext().getExtensionManifest?.(EXTENSION_NAME)?.version ?? null;
     ensureSettings(version);
 
-    registerDataEventListeners();
+    registerDataEventListeners({ onV3SpecConflict: resolveV3SpecConflict });
 
     await injectUI();
     registerUIEventListeners();

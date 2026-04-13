@@ -4,6 +4,8 @@
  */
 
 import { eventSource, event_types } from '../../../../../script.js';
+import { Popup, POPUP_RESULT } from '/scripts/popup.js';
+import { t } from '/scripts/i18n.js';
 import { renderExtensionTemplateAsync } from '../../../../extensions.js';
 import { EXTENSION_NAME } from '../index.js';
 import { getContext } from '/scripts/st-context.js';
@@ -15,6 +17,8 @@ import {
     ContextLevel,
     getNicknameForPersonaAvatar,
     getNicknameForCharAvatar,
+    seedNicknameFromV3SpecField,
+    applyGlobalCharNickname,
 } from './nicknames.js';
 
 let settingsUiInjected = false;
@@ -66,9 +70,68 @@ async function injectSettingsUI() {
 
     $('#nicknames_use_for_macros')
         .prop('checked', nicknameSettings.useForMacros)
-        .on('change', createSettingToggleHandler(settingKeys.USE_FOR_MACROS));
+        .on('change', createSettingToggleHandler(settingKeys.USE_FOR_MACROS, refreshV3CompatWarning));
+
+    $('#nicknames_use_v3_spec_compat')
+        .prop('checked', nicknameSettings.useV3SpecCompat)
+        .on('change', createSettingToggleHandler(settingKeys.USE_V3_SPEC_COMPAT, async () => {
+            refreshV3CompatWarning();
+            // Sync current character immediately when compat is turned on
+            if (nicknameSettings.useV3SpecCompat) {
+                const charKey = getContext().characters[getContext().characterId]?.avatar;
+                if (charKey) {
+                    await seedNicknameFromV3SpecField(charKey, { onConflict: resolveV3SpecConflict });
+                    refreshAllUI();
+                }
+            }
+        }));
+
+    refreshV3CompatWarning();
 
     settingsUiInjected = true;
+}
+
+/**
+ * Conflict resolver for seedNicknameFromV3SpecField. Shows a popup when both the
+ * extension and the character card have different nicknames set, and syncs accordingly.
+ * @param {string} charAvatarKey
+ * @param {string} globalNickname
+ * @param {string} specNickname
+ */
+export async function resolveV3SpecConflict(charAvatarKey, globalNickname, specNickname) {
+    const result = await Popup.show.confirm(
+        t`Nickname Conflict`,
+        t`Both the extension and the character card have different nicknames set for this character.
+
+<b>Extension (global):</b> ${globalNickname}
+<b>Card (V3 spec):</b> ${specNickname}
+
+Which one should be used?`,
+        {
+            okButton: t`Use Card (V3 Spec)`,
+            cancelButton: t`Keep Extension (Global)`,
+        },
+    );
+
+    if (result === POPUP_RESULT.AFFIRMATIVE) {
+        // Apply V3 spec value → global
+        applyGlobalCharNickname(charAvatarKey, specNickname);
+        refreshAllUI();
+    } else if (result === POPUP_RESULT.NEGATIVE) {
+        // Write global → card (via the next nickname save; already in sync)
+        // syncNicknameToV3SpecField is called automatically when the global nickname is next saved
+    }
+    // CANCELLED = do nothing
+}
+
+/**
+ * Shows or hides the warning icon next to the V3 spec compat setting.
+ * Visible when compat is enabled but "use for macros" is off, since the spec
+ * requires {{char}} to resolve to the nickname — which only works with macros on.
+ */
+function refreshV3CompatWarning() {
+    const showWarning = nicknameSettings.useV3SpecCompat && !nicknameSettings.useForMacros;
+    $('#nicknames_v3_compat_warning').toggleClass('hidden', !showWarning);
 }
 
 // ---------------------------------------------------------------------------
@@ -389,10 +452,6 @@ export function registerUIEventListeners() {
     // On context-change events the old selection is stale — reset and re-resolve.
     eventSource.on(event_types.PERSONA_CHANGED, () => {
         resetAndRefreshNicknameEditor('user');
-        if (nicknameSettings.useForChatMessages) refreshChatMessages();
-    });
-    eventSource.on(event_types.CHARACTER_SELECTED, () => {
-        resetAndRefreshNicknameEditor('char');
         if (nicknameSettings.useForChatMessages) refreshChatMessages();
     });
     eventSource.on(event_types.CHAT_CHANGED, () => {
