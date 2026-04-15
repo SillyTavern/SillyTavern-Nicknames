@@ -345,6 +345,8 @@ export function getNicknameForCharAvatar(charAvatarKey) {
 // V3 Spec Compatibility
 // ---------------------------------------------------------------------------
 
+/** @type {import('/scripts/char-data.js').v2CharData & { nickname: string }} v3CharData */
+
 /**
  * Writes the current global char nickname back to `character.data.nickname` on
  * the in-memory character object and triggers a debounced card save, so the value
@@ -360,8 +362,9 @@ export function syncNicknameToV3SpecField(charAvatarKey) {
     if (!character) return;
 
     const nickname = settings.mappings.global.chars[charAvatarKey] ?? '';
-    character.data ??= {};
-    character.data.nickname = nickname || undefined;
+
+    const v3CharData = /** @type {v3CharData} */ (character.data);
+    v3CharData.nickname = nickname || undefined;
     saveCharacterDebounced();
 }
 
@@ -372,7 +375,8 @@ export function syncNicknameToV3SpecField(charAvatarKey) {
  */
 export function getV3SpecNickname(charAvatarKey) {
     const character = getContext().characters.find(c => c.avatar === charAvatarKey);
-    return character?.data?.nickname?.trim() || null;
+    const v3CharData = /** @type {v3CharData} */ (character.data);
+    return v3CharData.nickname?.trim() || null;
 }
 
 /**

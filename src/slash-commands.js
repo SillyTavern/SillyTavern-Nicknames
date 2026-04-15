@@ -82,14 +82,7 @@ export function registerSlashCommands() {
                 typeList: [ARGUMENT_TYPE.STRING],
                 enumList: [
                     new SlashCommandEnumValue(RESET_NICKNAME_LABEL, 'Resets the nickname (removing it from this context)', enumTypes.enum, '❌'),
-                    new SlashCommandEnumValue(
-                        'a nickname',
-                        null,
-                        enumTypes.name,
-                        enumIcons.default,
-                        (input) => /^[\w\w]*$/.test(input),
-                        (input) => input,
-                    ),
+                    new SlashCommandEnumValue('a nickname', null, enumTypes.name, enumIcons.default, () => true, (input) => input),
                 ],
             }),
         ],
@@ -119,14 +112,7 @@ export function registerSlashCommands() {
                 typeList: [ARGUMENT_TYPE.STRING],
                 enumList: [
                     new SlashCommandEnumValue(RESET_NICKNAME_LABEL, 'Resets the nickname (removing it from this context)', enumTypes.enum, '❌'),
-                    new SlashCommandEnumValue(
-                        'a nickname',
-                        null,
-                        enumTypes.name,
-                        enumIcons.default,
-                        (input) => /^[\w\w]*$/.test(input),
-                        (input) => input,
-                    ),
+                    new SlashCommandEnumValue('a nickname', null, enumTypes.name, enumIcons.default, () => true, (input) => input),
                 ],
             }),
         ],
