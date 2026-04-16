@@ -20,6 +20,7 @@ import {
     seedNicknameFromV3SpecField,
     applyGlobalCharNickname,
 } from './nicknames.js';
+import { syncCoreMacroDescriptions } from './macros.js';
 
 let settingsUiInjected = false;
 
@@ -70,7 +71,10 @@ async function injectSettingsUI() {
 
     $('#nicknames_use_for_macros')
         .prop('checked', nicknameSettings.useForMacros)
-        .on('change', createSettingToggleHandler(settingKeys.USE_FOR_MACROS, refreshV3CompatWarning));
+        .on('change', createSettingToggleHandler(settingKeys.USE_FOR_MACROS, () => {
+            refreshV3CompatWarning();
+            syncCoreMacroDescriptions();
+        }));
 
     $('#nicknames_use_v3_spec_compat')
         .prop('checked', nicknameSettings.useV3SpecCompat)
