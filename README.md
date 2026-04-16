@@ -45,8 +45,8 @@ When reading nicknames, the extension checks in order: **Chat → Character → 
 
 | Command | Description |
 |---|---|
-| `/nickname-user [nickname] [for=global\|char\|chat]` | Get or set the user/persona nickname |
-| `/nickname-char [nickname] [for=global\|char\|chat]` | Get or set the character nickname |
+| `/nickname-user [for=global\|char\|chat] [nickname]` | Get or set the user/persona nickname |
+| `/nickname-char [for=global\|char\|chat] [nickname]` | Get or set the character nickname |
 
 Use `#reset` as the nickname to clear it from the specified context level.
 
@@ -54,7 +54,7 @@ Use `#reset` as the nickname to clear it from the specified context level.
 - `/nickname-user Alex` - Sets global persona nickname to "Alex"
 - `/nickname-user for=chat "The Real Alex"` - Sets chat-level persona nickname
 - `/nickname-char Bob` - Sets global character nickname to "Bob"
-- `/nickname-char #reset for=global` - Removes global character nickname
+- `/nickname-char for=global #reset` - Removes global character nickname
 
 ### Settings
 
@@ -65,22 +65,19 @@ All settings are **disabled by default** — enable them as needed:
 - **Character list** — Display nicknames instead of original names in the character list
 - **Chat messages** — Use nicknames as sender names for chat messages
 - **Macros & prompts** — Replace `{{user}}` and `{{char}}` with nicknames in prompts sent to the AI
+- **V3 spec compatibility** — Sync global character nicknames with the character card's `data.nickname` field. When enabled, nicknames are saved into the card and can be read from imported cards. If both the card and extension have different nicknames, a conflict resolution popup appears.
 
 ## Roadmap
 
-- [x] Core nickname data layer with three context levels
-- [x] Slash commands for nickname management
-- [x] Settings panel with usage toggles
-- [x] Integration with Experimental Macro Engine
-- [x] Character rename migration
-- [ ] Nickname editor in Persona/Character Management UI
-- [ ] Character list nickname display
-- [ ] Chat message sender name replacement
-- [ ] Duplication of char/persona should copy all nicknames too
-- [ ] Compatibility with `nickname` field of official [charv3 spec](https://github.com/kwaroran/character-card-spec-v3/blob/main/SPEC_V3.md#nickname)
-- [ ] Compatibility with nickname field on ChubAI
-- [ ] Import/export nicknames of chars with the char
-- [ ] Import/export nickname mappings (all of them)
+Planned features for future releases:
+
+- [ ] Dedicated `{{fullUser}}` / `{{fullChar}}` and `{{nicknameUser}}` / `{{nicknameChar}}` macros — always return the original full name or the nickname (if set), regardless of macro override settings
+- [ ] Import/export nickname mappings (bulk export all global and char-level data)
+- [ ] Optional visual indicator when nicknames are active (tooltip/label in char list and chat)
+
+## ToDo List
+
+- [ ] Extension versioning and migration system
 
 ## License
 
@@ -90,4 +87,4 @@ AGPL-3.0
 
 - Discord: `@Wolfsblvt`
 - Issues and pull requests are welcome.
-- Any features/fixes should be pushed to the `dev` branch.
+- Any features/fixes should be submitted as a PR to the `dev` branch.
