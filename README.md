@@ -67,6 +67,13 @@ All settings are **disabled by default** — enable them as needed:
 - **Macros & prompts** — Replace `{{user}}` and `{{char}}` with nicknames in prompts sent to the AI
 - **V3 spec compatibility** — Sync global character nicknames with the character card's `data.nickname` field. When enabled, nicknames are saved into the card and can be read from imported cards. If both the card and extension have different nicknames, a conflict resolution popup appears.
 
+### Cleanup Extension Data
+
+> [!NOTE]
+> This feature requires the **staging** branch of SillyTavern.
+
+All extension settings and saved nicknames, except for chat-bound nicknames, can be removed via the extensions list or during uninstall.
+
 ## Roadmap
 
 Planned features for future releases:
@@ -74,6 +81,7 @@ Planned features for future releases:
 - [ ] Dedicated `{{fullUser}}` / `{{fullChar}}` and `{{nicknameUser}}` / `{{nicknameChar}}` macros — always return the original full name or the nickname (if set), regardless of macro override settings
 - [ ] Import/export nickname mappings (bulk export all global and char-level data)
 - [ ] Optional visual indicator when nicknames are active (tooltip/label in char list and chat)
+- [ ] Allow the model to set nicknames (via function calling)
 
 ## ToDo List
 
