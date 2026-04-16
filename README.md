@@ -85,6 +85,7 @@ Planned features for future releases:
 
 ## ToDo List
 
+- [ ] Migrate away from jQuery
 - [ ] Extension versioning and migration system
 
 ## License

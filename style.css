@@ -18,8 +18,14 @@
     cursor: default;
 }
 
-.context-icon.active { opacity: 1; }
+/* Set = has a nickname value but is not the active one */
+.context-icon.set { opacity: 0.5; }
+.context-icon[data-context="global"].set { color: var(--nicknames-global-color); }
+.context-icon[data-context="char"].set   { color: var(--nicknames-char-color); }
+.context-icon[data-context="chat"].set     { color: var(--nicknames-chat-color); }
 
+/* Active = the currently effective nickname */
+.context-icon.active { opacity: 1; }
 .context-icon[data-context="global"].active { color: var(--nicknames-global-color); }
 .context-icon[data-context="char"].active   { color: var(--nicknames-char-color); }
 .context-icon[data-context="chat"].active   { color: var(--nicknames-chat-color); }

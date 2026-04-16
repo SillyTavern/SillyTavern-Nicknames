@@ -227,10 +227,24 @@ function updateEditorState(type, container) {
         input.value = values[selectedContext] || '';
     }
 
-    // Update active context indicator icons
+    // Update context indicator icons: set (has value) vs active (effective)
     container.querySelectorAll('.context-icon').forEach(el => {
         const icon = /** @type {HTMLElement} */ (el);
-        icon.classList.toggle('active', icon.dataset.context === values.activeContext);
+        const ctx = icon.dataset.context;
+        const hasValue = !!values[ctx];
+        const isActive = ctx === values.activeContext;
+
+        icon.classList.toggle('set', hasValue && !isActive);
+        icon.classList.toggle('active', isActive);
+
+        // Dynamic tooltip showing value or "not set"
+        const label = ctx === 'global' ? 'Global' : ctx === 'char' ? 'Character' : 'Chat';
+        const valueText = values[ctx] || 'Not set';
+        icon.title = isActive
+            ? `${label}: "${valueText}" (active)`
+            : hasValue
+                ? `${label}: "${valueText}"`
+                : `${label}: Not set`;
     });
 
     // Update context selector buttons (selected, disabled)
@@ -427,6 +441,16 @@ function registerEditorEventListeners() {
         if (e.key === 'Enter') {
             $(this).closest('.nickname-editor-container').find('.nickname-save-btn').trigger('click');
         }
+    });
+
+    // Inline drawer toggle for nickname summary
+    $(document).on('click', '.nickname-editor-container .inline-drawer-toggle', function () {
+        const $toggle = $(this);
+        const $content = $toggle.next('.inline-drawer-content');
+        const $icon = $toggle.find('.inline-drawer-icon');
+
+        $content.slideToggle(200);
+        $icon.toggleClass('down up');
     });
 }
 
