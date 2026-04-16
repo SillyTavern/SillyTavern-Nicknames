@@ -82,7 +82,7 @@ function registerNicknameMacros() {
  * Substitutes user/char names with their nicknames when 'useForMacros' is enabled.
  */
 function registerEnvProvider() {
-    MacroEnvBuilder.registerProvider((env) => {
+    MacroEnvBuilder.registerProvider((env, ctx) => {
         if (!nicknameSettings.useForMacros) return;
 
         const userResult = getUserNickname();
@@ -97,9 +97,9 @@ function registerEnvProvider() {
 
         // Recompute group values with nicknames applied
         // These are originally computed before providers run, so we need to recalculate
-        env.names.group = getGroupValue({ includeMuted: true });
-        env.names.groupNotMuted = getGroupValue({ includeMuted: false });
-        env.names.notChar = getGroupValue({ filterOutChar: true, includeUser: env.names.user });
+        env.names.group = getGroupValue(ctx, { includeMuted: true });
+        env.names.groupNotMuted = getGroupValue(ctx, { includeMuted: false });
+        env.names.notChar = getGroupValue(ctx, { filterOutChar: true, includeUser: env.names.user });
     }, env_provider_order.NORMAL);
 }
 
@@ -122,13 +122,16 @@ export function registerMacros() {
  * Gets the group value with nicknames applied to character names.
  * Mirrors the logic from MacroEnvBuilder.js but resolves nicknames for each character.
  *
+ * @param {Object} ctx - The macro evaluation context (MacroEnvRawContext)
  * @param {Object} options
  * @param {boolean} [options.includeMuted=false] - Whether to include muted members
  * @param {boolean} [options.filterOutChar=false] - Whether to filter out the current character
  * @param {string} [options.includeUser=null] - User name to include if filterOutChar is true
  * @returns {string} Comma-separated list of names with nicknames applied
  */
-function getGroupValue({ includeMuted = false, filterOutChar = false, includeUser = null } = {}) {
+function getGroupValue(ctx, { includeMuted = false, filterOutChar = false, includeUser = null } = {}) {
+    if (typeof ctx?.groupOverride === 'string') return ctx.groupOverride;
+
     const charResult = getCharNickname();
     const currentCharNickname = charResult.name && charResult.context !== ContextLevel.NONE
         ? charResult.name
