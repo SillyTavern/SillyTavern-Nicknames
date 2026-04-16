@@ -7,7 +7,7 @@
     "css": "style.css",
     "author": "Wolfsblvt",
     "version": "1.0.0",
-    "homePage": "https://github.com/Wolfsblvt/SillyTavern-Nicknames",
+    "homePage": "https://github.com/SillyTavern/SillyTavern-Nicknames",
     "hooks": {
         "activate": "init",
         "clean": "clean"

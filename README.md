@@ -66,7 +66,7 @@ All settings are **disabled by default** — enable them as needed:
 
 - **Character list** — Display nicknames instead of original names in the character list
 - **Chat messages** — Use nicknames as sender names for chat messages
-- **Macros & prompts** — Replace `{{user}}` and `{{char}}` with nicknames in prompts sent to the AI
+- **Macros & prompts** — Replace `{{user}}` and `{{char}}` (in all relevant macros) with nicknames in prompts sent to the AI
 - **V3 spec compatibility** — Sync global character nicknames with the character card's `data.nickname` field. When enabled, nicknames are saved into the card and can be read from imported cards. If both the card and extension have different nicknames, a conflict resolution popup appears.
 
 ### Cleanup Extension Data
