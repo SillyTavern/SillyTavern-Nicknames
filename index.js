@@ -1,6 +1,6 @@
 import { injectUI, registerUIEventListeners, resolveV3SpecConflict } from './src/ui.js';
 import { ensureSettings, registerDataEventListeners, cleanAllNicknameData } from './src/nicknames.js';
-import { registerMacroProvider } from './src/macros.js';
+import { registerMacros } from './src/macros.js';
 import { registerSlashCommands } from './src/slash-commands.js';
 
 export const EXTENSION_KEY = 'nicknames';
@@ -26,7 +26,7 @@ export async function init() {
     await injectUI();
     registerUIEventListeners();
 
-    registerMacroProvider();
+    registerMacros();
     registerSlashCommands();
 
     console.debug(`[${EXTENSION_NAME}] Extension activated`);

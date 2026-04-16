@@ -6,19 +6,82 @@
  */
 
 import { MacroEnvBuilder, env_provider_order } from '../../../../../scripts/macros/engine/MacroEnvBuilder.js';
+import { MacroRegistry, MacroCategory } from '../../../../../scripts/macros/engine/MacroRegistry.js';
 import { groups, selected_group } from '../../../../../scripts/group-chats.js';
 import { characters, name2 } from '../../../../../script.js';
+import { getContext } from '/scripts/st-context.js';
 import { getUserNickname, getCharNickname, getNicknameForCharAvatar, nicknameSettings, ContextLevel } from './nicknames.js';
 
-let providerRegistered = false;
+let macrosRegistered = false;
+
+/** Text appended to core macro descriptions when the nickname macro override is active. */
+const NICKNAME_NOTE = ' [Using nicknames when available]';
+
+/** Core macros whose names are overridden by the nickname env provider. */
+const NICKNAME_AFFECTED_MACROS = /** @type {const} */ (['user', 'char', 'group', 'groupNotMuted', 'notChar']);
+
+/** Stores the original descriptions so they can be restored when the setting is toggled off. */
+const originalMacroDescriptions = /** @type {Map<string, string>} */ (new Map());
 
 /**
- * Registers the nickname provider with the MacroEnvBuilder.
- * This modifies the macro environment to use nicknames for user/char names.
+ * Appends or removes the nickname note from core macro descriptions.
+ * Should be called whenever the 'useForMacros' setting changes.
  */
-export function registerMacroProvider() {
-    if (providerRegistered) return;
+export function syncCoreMacroDescriptions() {
+    const enabled = nicknameSettings.useForMacros;
+    for (const macroName of NICKNAME_AFFECTED_MACROS) {
+        const def = MacroRegistry.getMacro(macroName);
+        if (!def) continue;
 
+        if (!originalMacroDescriptions.has(macroName)) {
+            originalMacroDescriptions.set(macroName, def.description);
+        }
+
+        const original = originalMacroDescriptions.get(macroName);
+        def.description = enabled ? `${original}${NICKNAME_NOTE}` : original;
+    }
+}
+
+/**
+ * Registers the extension's own nickname macros:
+ * - {{userFull}} / {{charFull}}       — always the original name, ignoring override settings
+ * - {{userNickname}} / {{charNickname}} — nickname if set, otherwise the original name
+ */
+function registerNicknameMacros() {
+    MacroRegistry.registerMacro('userFull', {
+        category: MacroCategory.NAMES,
+        description: 'Your current Persona username, always the original full name regardless of nickname settings.',
+        returns: 'Persona username (original, no nickname substitution).',
+        handler: () => getContext().name1 ?? '',
+    });
+
+    MacroRegistry.registerMacro('charFull', {
+        category: MacroCategory.NAMES,
+        description: 'The character\'s name, always the original full name regardless of nickname settings.',
+        returns: 'Character name (original, no nickname substitution).',
+        handler: () => getContext().name2 ?? '',
+    });
+
+    MacroRegistry.registerMacro('userNickname', {
+        category: MacroCategory.NAMES,
+        description: 'Your current Persona nickname if one is set, otherwise falls back to the original username.',
+        returns: 'Persona nickname, or original username if no nickname is set.',
+        handler: () => getUserNickname().name ?? '',
+    });
+
+    MacroRegistry.registerMacro('charNickname', {
+        category: MacroCategory.NAMES,
+        description: 'The character\'s nickname if one is set, otherwise falls back to the original character name.',
+        returns: 'Character nickname, or original name if no nickname is set.',
+        handler: () => getCharNickname().name ?? '',
+    });
+}
+
+/**
+ * Registers the nickname env provider with MacroEnvBuilder.
+ * Substitutes user/char names with their nicknames when 'useForMacros' is enabled.
+ */
+function registerEnvProvider() {
     MacroEnvBuilder.registerProvider((env) => {
         if (!nicknameSettings.useForMacros) return;
 
@@ -38,8 +101,21 @@ export function registerMacroProvider() {
         env.names.groupNotMuted = getGroupValue({ includeMuted: false });
         env.names.notChar = getGroupValue({ filterOutChar: true, includeUser: env.names.user });
     }, env_provider_order.NORMAL);
+}
 
-    providerRegistered = true;
+/**
+ * Registers all macro contributions from the Nicknames extension:
+ * the env provider for nickname substitution, the dedicated nickname macros,
+ * and the initial description annotations on affected core macros.
+ */
+export function registerMacros() {
+    if (macrosRegistered) return;
+
+    registerEnvProvider();
+    registerNicknameMacros();
+    syncCoreMacroDescriptions();
+
+    macrosRegistered = true;
 }
 
 /**
