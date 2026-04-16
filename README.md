@@ -41,6 +41,8 @@ A dedicated nickname editor appears directly in **Persona Management** (for user
 
 When reading nicknames, the extension checks in order: **Chat → Character → Global**, using the first one found.
 
+<img width="208" height="169" alt="image" src="https://github.com/user-attachments/assets/22109da1-1738-4fcb-af40-97118235f191" /><img width="295" height="169" alt="image" src="https://github.com/user-attachments/assets/a745ddf8-7b1e-4c14-a6f8-010a721ad486" />
+
 ### Slash Commands
 
 | Command | Description |
